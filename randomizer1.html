@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Group Randomizer</title>
+    <style>
+        /* CSS for Styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 25px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #5f6368;
+        }
+
+        textarea, input[type="number"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+        }
+
+        textarea {
+            min-height: 150px;
+        }
+        
+        .name-input-container {
+            grid-column: 1 / -1; /* Span both columns */
+        }
+
+        button {
+            grid-column: 1 / -1; /* Span both columns */
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #1a73e8;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #155ab6;
+        }
+        
+        /* Spinning Wheel */
+        .wheel-container {
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+        }
+        
+        .wheel {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Results Display */
+        #results {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .group-card {
+            background-color: #e8f0fe;
+            border: 1px solid #d2e3fc;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .group-card h3 {
+            margin-top: 0;
+            color: #1967d2;
+            border-bottom: 2px solid #d2e3fc;
+            padding-bottom: 10px;
+        }
+
+        .group-card ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .group-card li {
+            background-color: #fff;
+            padding: 8px 12px;
+            margin-top: 8px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Student Group Randomizer 🧑‍🏫</h1>
+        
+        <div class="controls">
+            <div class="input-group name-input-container">
+                <label for="studentNames">Paste Student Names (one per line)</label>
+                <textarea id="studentNames" placeholder="Alice&#10;Bob&#10;Charlie&#10;Diana"></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label for="numGroups">Number of Groups</label>
+                <input type="number" id="numGroups" min="1" placeholder="e.g., 4">
+            </div>
+
+            <div class="input-group">
+                <label for="maxStudents">Max Students per Group (optional)</label>
+                <input type="number" id="maxStudents" min="1" placeholder="e.g., 3">
+            </div>
+
+            <button onclick="generateGroups()">Create Groups</button>
+        </div>
+        
+        <div class="wheel-container" id="wheel">
+            <div class="wheel"></div>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // JavaScript for Functionality
+        function generateGroups() {
+            const namesInput = document.getElementById('studentNames').value.trim();
+            const numGroupsInput = document.getElementById('numGroups').value;
+            const maxStudentsInput = document.getElementById('maxStudents').value;
+            const wheel = document.getElementById('wheel');
+            const resultsDiv = document.getElementById('results');
+
+            // Clear previous results and show spinner
+            resultsDiv.innerHTML = '';
+            wheel.style.display = 'flex';
+            
+            // --- Logic starts here ---
+            
+            // 1. Get and clean student names
+            let students = namesInput.split('\n').map(name => name.trim()).filter(name => name !== '');
+            if (students.length === 0) {
+                alert("Please enter at least one student name.");
+                wheel.style.display = 'none';
+                return;
+            }
+
+            // 2. Shuffle the students randomly (Fisher-Yates Shuffle)
+            for (let i = students.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [students[i], students[j]] = [students[j], students[i]];
+            }
+
+            // 3. Determine grouping strategy
+            let groups = [];
+            if (numGroupsInput) {
+                // Strategy 1: Distribute into a fixed number of groups
+                const numGroups = parseInt(numGroupsInput);
+                if (numGroups <= 0) {
+                     alert("Number of groups must be greater than 0.");
+                     wheel.style.display = 'none';
+                     return;
+                }
+                // Create empty groups
+                for (let i = 0; i < numGroups; i++) {
+                    groups.push([]);
+                }
+                // Distribute students one by one
+                let currentGroup = 0;
+                students.forEach(student => {
+                    groups[currentGroup].push(student);
+                    currentGroup = (currentGroup + 1) % numGroups;
+                });
+
+            } else if (maxStudentsInput) {
+                // Strategy 2: Create groups with a maximum size
+                const maxStudents = parseInt(maxStudentsInput);
+                 if (maxStudents <= 0) {
+                     alert("Max students per group must be greater than 0.");
+                     wheel.style.display = 'none';
+                     return;
+                }
+                for (let i = 0; i < students.length; i += maxStudents) {
+                    groups.push(students.slice(i, i + maxStudents));
+                }
+
+            } else {
+                alert("Please enter either the 'Number of Groups' or the 'Max Students per Group'.");
+                wheel.style.display = 'none';
+                return;
+            }
+            
+            // 4. Display the results after a short delay
+            setTimeout(() => {
+                wheel.style.display = 'none';
+                displayGroups(groups);
+            }, 1000); // 1-second delay for the spinning animation
+        }
+
+        function displayGroups(groups) {
+            const resultsDiv = document.getElementById('results');
+            groups.forEach((group, index) => {
+                if (group.length > 0) {
+                    const groupCard = document.createElement('div');
+                    groupCard.className = 'group-card';
+                    
+                    let cardHTML = `<h3>Group ${index + 1}</h3><ul>`;
+                    group.forEach(student => {
+                        cardHTML += `<li>${student}</li>`;
+                    });
+                    cardHTML += `</ul>`;
+                    
+                    groupCard.innerHTML = cardHTML;
+                    resultsDiv.appendChild(groupCard);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

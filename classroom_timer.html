@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus Flow Classroom Timer</title>
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 20% 20%, rgba(191, 219, 254, 0.55), transparent 55%),
+                     radial-gradient(circle at 80% 0%, rgba(254, 226, 226, 0.7), transparent 50%),
+                     linear-gradient(135deg, #0f172a, #1e3a8a 55%, #0369a1);
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --primary: #0ea5e9;
+      --accent: #f97316;
+      --text-dark: #0f172a;
+      --text-light: #f8fafc;
+      --shadow: 0 30px 60px rgba(15, 23, 42, 0.28);
+      --transition: 0.25s ease;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: var(--bg-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dark);
+      padding: clamp(1.5rem, 4vw, 3rem);
+    }
+
+    main {
+      width: min(960px, 100%);
+      backdrop-filter: blur(14px);
+      background: var(--card-bg);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.95), rgba(59, 130, 246, 0.95));
+      padding: clamp(1.75rem, 4vw, 2.5rem) clamp(1.5rem, 5vw, 3rem);
+      color: var(--text-light);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      inset: auto -120px -140px 50%;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(248, 250, 252, 0.35), transparent 68%);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .quote-text {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 600;
+      line-height: 1.35;
+      margin: 0;
+    }
+
+    .quote-author {
+      margin: 0.75rem 0 0;
+      font-size: clamp(1rem, 2.4vw, 1.25rem);
+      opacity: 0.85;
+      font-weight: 500;
+    }
+
+    .timer-surface {
+      padding: clamp(2rem, 4vw, 3.5rem) clamp(2rem, 6vw, 4.5rem);
+      display: grid;
+      gap: clamp(1.5rem, 4vw, 3rem);
+      justify-items: center;
+    }
+
+    .selectors {
+      display: flex;
+      align-items: center;
+      gap: clamp(1.5rem, 4vw, 3rem);
+    }
+
+    .selector {
+      display: grid;
+      gap: 0.75rem;
+      justify-items: center;
+      color: var(--text-dark);
+    }
+
+    .selector label {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: rgba(15, 23, 42, 0.7);
+    }
+
+    .wheel {
+      position: relative;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: inset 0 10px 28px rgba(15, 23, 42, 0.14), 0 16px 40px rgba(14, 165, 233, 0.25);
+      padding: 0.5rem;
+    }
+
+    .wheel::after {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 50%;
+      height: 42px;
+      border-radius: 16px;
+      transform: translateY(-50%);
+      background: rgba(14, 165, 233, 0.12);
+      pointer-events: none;
+    }
+
+    select {
+      appearance: none;
+      border: none;
+      background: transparent;
+      width: clamp(120px, 20vw, 150px);
+      height: clamp(180px, 28vw, 220px);
+      font-size: clamp(1.25rem, 3vw, 1.6rem);
+      font-weight: 600;
+      text-align: center;
+      color: var(--text-dark);
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+      padding: 0;
+    }
+
+    select option {
+      scroll-snap-align: center;
+      padding: 0.55rem 0;
+    }
+
+    select:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+      border-radius: 16px;
+    }
+
+    select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .colon {
+      font-size: clamp(2.8rem, 6vw, 3.6rem);
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .time-display {
+      font-size: clamp(3.5rem, 8vw, 6.5rem);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-dark);
+      text-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 0.9rem 2.2rem;
+      border: none;
+      border-radius: 999px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+      box-shadow: 0 16px 28px rgba(14, 165, 233, 0.35);
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      color: white;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.secondary {
+      background: rgba(15, 23, 42, 0.04);
+      color: var(--text-dark);
+      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.18);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status-banner {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      color: rgba(15, 23, 42, 0.9);
+      background: rgba(14, 165, 233, 0.1);
+      padding: 0.9rem clamp(1.1rem, 4vw, 2rem);
+      border-radius: 18px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    @media (max-width: 680px) {
+      main { border-radius: 24px; }
+      .selectors { flex-direction: column; gap: 1rem; }
+      .colon { display: none; }
+      select { width: clamp(160px, 60vw, 200px); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="quote-text" id="quoteText">Stay present, stay powerful, stay proud of your effort.</p>
+      <p class="quote-author" id="quoteAuthor">— Focus Flow Crew</p>
+    </header>
+
+    <section class="timer-surface" aria-live="polite">
+      <div class="time-display" id="timeDisplay">05:00</div>
+      <div class="status-banner" id="statusBanner">Timer is idle</div>
+
+      <div class="selectors">
+        <div class="selector">
+          <label for="minuteWheel">Minutes</label>
+          <div class="wheel">
+            <select id="minuteWheel" size="7" aria-label="Set minutes"></select>
+          </div>
+        </div>
+        <div class="colon">:</div>
+        <div class="selector">
+          <label for="secondWheel">Seconds</label>
+          <div class="wheel">
+            <select id="secondWheel" size="7" aria-label="Set seconds"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="startPauseBtn" type="button">Start</button>
+        <button id="resetBtn" class="secondary" type="button" disabled>Reset</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const TICK_INTERVAL = 250; // ms update cadence
+    const DEFAULT_MINUTES = 5;
+
+    let isRunning = false;
+    let remainingSeconds = DEFAULT_MINUTES * 60;
+    let timerId = null;
+    let lastUpdateTimestamp = null;
+    let lastQuoteIndex = -1;
+
+    const minuteWheel = document.getElementById('minuteWheel');
+    const secondWheel = document.getElementById('secondWheel');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const statusBanner = document.getElementById('statusBanner');
+    const startPauseBtn = document.getElementById('startPauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const quoteText = document.getElementById('quoteText');
+    const quoteAuthor = document.getElementById('quoteAuthor');
+
+    const quotes = [
+      { text: "Effort is the secret handshake of champions.", author: "Team Inspire" },
+      { text: "Minutes turn into mastery when you stay on task.", author: "Coach Bright" },
+      { text: "Focus now, celebrate later.", author: "Future You" },
+      { text: "Your attention is your superpower—aim it wisely.", author: "Study Squad" },
+      { text: "Be the student who finishes strong every time.", author: "Honor Roll Heroes" },
+      { text: "Today's focus fuels tomorrow's win.", author: "Momentum Makers" },
+      { text: "Stay steady, stay ready, stay proud.", author: "Classroom Crew" },
+      { text: "You were made to do great work—start now.", author: "Motivation Station" }
+    ];
+
+    function populateWheels() {
+      for (let minutes = 1; minutes <= 120; minutes += 1) {
+        const option = document.createElement('option');
+        option.value = minutes;
+        option.textContent = `${minutes} min`;
+        if (minutes === DEFAULT_MINUTES) {
+          option.selected = true;
+        }
+        minuteWheel.appendChild(option);
+      }
+
+      for (let seconds = 0; seconds <= 60; seconds += 1) {
+        const option = document.createElement('option');
+        option.value = seconds;
+        option.textContent = seconds.toString().padStart(2, '0') + ' sec';
+        if (seconds === 0) {
+          option.selected = true;
+        }
+        secondWheel.appendChild(option);
+      }
+    }
+
+    populateWheels();
+
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+      const seconds = Math.max(totalSeconds % 60, 0).toString().padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+
+    function updateDisplay() {
+      timeDisplay.textContent = formatTime(remainingSeconds);
+    }
+
+    function getSelectedDuration() {
+      const minutes = parseInt(minuteWheel.value, 10) || 0;
+      const seconds = parseInt(secondWheel.value, 10) || 0;
+      return minutes * 60 + seconds;
+    }
+
+    function setStatus(message, accent = false) {
+      statusBanner.textContent = message;
+      statusBanner.style.background = accent ? 'rgba(249, 115, 22, 0.16)' : 'rgba(14, 165, 233, 0.12)';
+      statusBanner.style.color = accent ? '#c2410c' : 'rgba(15, 23, 42, 0.95)';
+    }
+
+    function disableSelectors(disabled) {
+      minuteWheel.disabled = disabled;
+      secondWheel.disabled = disabled;
+    }
+
+    function pickNewQuote() {
+      let index = Math.floor(Math.random() * quotes.length);
+      if (quotes.length > 1) {
+        while (index === lastQuoteIndex) {
+          index = Math.floor(Math.random() * quotes.length);
+        }
+      }
+      lastQuoteIndex = index;
+      const quote = quotes[index];
+      quoteText.textContent = quote.text;
+      quoteAuthor.textContent = `— ${quote.author}`;
+    }
+
+    function applyElapsedSeconds(totalSeconds) {
+      if (!isRunning) return;
+      remainingSeconds -= totalSeconds;
+
+      if (remainingSeconds <= 0) {
+        remainingSeconds = 0;
+        updateDisplay();
+        completeTimer();
+      } else {
+        updateDisplay();
+      }
+    }
+
+    function tick() {
+      if (!isRunning || lastUpdateTimestamp === null) return;
+      const now = Date.now();
+      const elapsedMs = now - lastUpdateTimestamp;
+      if (elapsedMs < 1000) return;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      lastUpdateTimestamp = now - (elapsedMs % 1000);
+      applyElapsedSeconds(elapsedSeconds);
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+
+      if (remainingSeconds <= 0) {
+        remainingSeconds = getSelectedDuration();
+      }
+
+      if (remainingSeconds <= 0) {
+        setStatus('Choose a time before starting.', true);
+        return;
+      }
+
+      isRunning = true;
+      lastUpdateTimestamp = Date.now();
+      timerId = setInterval(tick, TICK_INTERVAL);
+      startPauseBtn.textContent = 'Pause';
+      resetBtn.disabled = false;
+      disableSelectors(true);
+      setStatus('Timer is running - stay focused!');
+    }
+
+    function pauseTimer() {
+      isRunning = false;
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+      lastUpdateTimestamp = null;
+      startPauseBtn.textContent = 'Resume';
+      disableSelectors(false);
+      setStatus('Timer paused. Ready when you are.');
+    }
+
+    function completeTimer() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+      isRunning = false;
+      lastUpdateTimestamp = null;
+      disableSelectors(false);
+      startPauseBtn.textContent = 'Start';
+      resetBtn.disabled = true;
+      setStatus('Time is up! Celebrate the focus.', true);
+      playChime();
+      pickNewQuote();
+    }
+
+    function resetTimer() {
+      if (isRunning) {
+        pauseTimer();
+      }
+      remainingSeconds = getSelectedDuration();
+      updateDisplay();
+      startPauseBtn.textContent = 'Start';
+      resetBtn.disabled = true;
+      setStatus('Timer reset. Set and go!');
+    }
+
+    function startPauseHandler() {
+      if (!isRunning) {
+        startTimer();
+      } else {
+        pauseTimer();
+      }
+    }
+
+    async function playChime() {
+      try {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        const duration = 0.6;
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, context.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(523.25, context.currentTime + duration);
+
+        gain.gain.setValueAtTime(0.001, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.25, context.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration);
+        setTimeout(() => context.close(), duration * 1200);
+      } catch (err) {
+        // Ignore autoplay/audio permission issues silently.
+      }
+    }
+
+    function handleWheelChange() {
+      if (!isRunning) {
+        remainingSeconds = getSelectedDuration();
+        updateDisplay();
+        setStatus('Timer is idle');
+      }
+    }
+
+    startPauseBtn.addEventListener('click', startPauseHandler);
+    resetBtn.addEventListener('click', resetTimer);
+    minuteWheel.addEventListener('change', handleWheelChange);
+    secondWheel.addEventListener('change', handleWheelChange);
+
+    updateDisplay();
+    pickNewQuote();
+    setStatus('Timer is idle');
+
+    setInterval(pickNewQuote, 45000);
+  </script>
+</body>
+</html>

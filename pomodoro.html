@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Momentum Maker Pomodoro</title>
+  <style>
+    :root {
+      --work-color: #3b82f6;
+      --break-color: #10b981;
+      --surface: rgba(255, 255, 255, 0.92);
+      --text-primary: #1f2937;
+      --text-secondary: #4b5563;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      --transition: 0.3s ease;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #dbeafe, #fef3c7 40%, #d1fae5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .card {
+      width: min(720px, 100%);
+      background: var(--surface);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 2.75rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -180px 50% auto -120px;
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.28), transparent 70%);
+      transform: rotate(-12deg);
+      z-index: 0;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+
+    .tagline {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin: 0.75rem auto 2.5rem;
+      max-width: 420px;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .timer-area {
+      display: grid;
+      gap: 2rem;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (min-width: 720px) {
+      .timer-area { grid-template-columns: 1fr auto; }
+    }
+
+    .timer-visual {
+      width: clamp(220px, 35vw, 280px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      position: relative;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--work-color) 0deg, rgba(255, 255, 255, 0.9) 0deg 360deg);
+      transition: background var(--transition);
+    }
+
+    .timer-visual.break {
+      background: conic-gradient(var(--break-color) 0deg, rgba(255, 255, 255, 0.9) 0deg 360deg);
+    }
+
+    .timer-circle {
+      width: 82%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+
+    .time-display {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .mode-indicator {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      margin-top: 0.4rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+      align-items: stretch;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .status-pill {
+      align-self: center;
+      padding: 0.45rem 1.4rem;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(59, 130, 246, 0.16);
+      color: #1d4ed8;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .status-pill.break {
+      background: rgba(16, 185, 129, 0.16);
+      color: #047857;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    button {
+      padding: 0.85rem 1.75rem;
+      border: none;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+      box-shadow: 0 12px 20px rgba(59, 130, 246, 0.25);
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      color: white;
+    }
+
+    button:hover { transform: translateY(-2px); }
+
+    button:active { transform: translateY(1px); }
+
+    button.secondary {
+      background: #f8fafc;
+      color: var(--text-primary);
+      box-shadow: 0 10px 18px rgba(148, 163, 184, 0.25);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .quote-card {
+      margin-top: 2.5rem;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.95));
+      border-radius: 24px;
+      padding: 1.8rem;
+      position: relative;
+      box-shadow: 0 12px 34px rgba(15, 23, 42, 0.12);
+      overflow: hidden;
+    }
+
+    .quote-card::before {
+      content: '"';
+      position: absolute;
+      top: -25px;
+      left: 25px;
+      font-size: 7rem;
+      font-weight: 800;
+      color: rgba(59, 130, 246, 0.16);
+    }
+
+    .quote-text {
+      font-size: 1.2rem;
+      font-weight: 600;
+      line-height: 1.6;
+      margin: 0 0 0.75rem;
+      position: relative;
+    }
+
+    .quote-author {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .cycle-count {
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .cycle-count strong { color: #1d4ed8; }
+
+    @media (max-width: 520px) {
+      .card {
+        padding: 2.2rem 1.5rem 2.6rem;
+        border-radius: 24px;
+      }
+
+      .timer-area { gap: 1.6rem; }
+
+      .buttons { gap: 0.75rem; }
+
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" aria-live="polite">
+    <h1>Momentum Maker Pomodoro</h1>
+    <section class="timer-area">
+      <div class="timer-visual" id="timerRing">
+        <div class="timer-circle">
+          <div>
+            <div class="time-display" id="timeDisplay">30:00</div>
+            <div class="mode-indicator" id="modeIndicator">Focus Session</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <span class="status-pill" id="statusPill">Focus Mode</span>
+        <div class="buttons">
+          <button id="startPauseBtn" type="button">Start Focus</button>
+          <button id="resetBtn" class="secondary" type="button" disabled>Reset</button>
+        </div>
+        <p class="cycle-count" id="cycleCount">Completed focus blocks today: <strong>0</strong></p>
+      </div>
+    </section>
+
+    <section class="quote-card" aria-live="polite">
+      <p class="quote-text" id="quoteText">"Every giant leap starts with a single, confident step."</p>
+      <p class="quote-author" id="quoteAuthor">— Momentum Maker</p>
+    </section>
+  </main>
+
+  <script>
+    const WORK_DURATION = 30 * 60; // seconds
+    const BREAK_DURATION = 5 * 60; // seconds
+    const TICK_INTERVAL = 250; // ms
+
+    let isWorkMode = true;
+    let isRunning = false;
+    let remainingSeconds = WORK_DURATION;
+    let timerId = null;
+    let completedWorkSessions = 0;
+    let lastQuoteIndex = -1;
+    let lastUpdateTimestamp = null;
+
+    const timeDisplay = document.getElementById('timeDisplay');
+    const modeIndicator = document.getElementById('modeIndicator');
+    const timerRing = document.getElementById('timerRing');
+    const statusPill = document.getElementById('statusPill');
+    const startPauseBtn = document.getElementById('startPauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const cycleCount = document.getElementById('cycleCount');
+    const quoteText = document.getElementById('quoteText');
+    const quoteAuthor = document.getElementById('quoteAuthor');
+
+    const quotes = [
+      { text: "One focused half-hour can set up tomorrow's A+.", author: "Study Spark" },
+      { text: "Your brain is a muscle—this focus time is your workout.", author: "Coach Carter" },
+      { text: "You don't have to know it all today, but you do have to start.", author: "Ms. Thompson" },
+      { text: "Stay curious, stay brave, stay on task.", author: "Future You" },
+      { text: "Your effort today is the story you'll tell tomorrow.", author: "Honor Roll Hero" },
+      { text: "Progress feels good because you're earning it.", author: "Motivation Station" },
+      { text: "Great habits are built 30 minutes at a time.", author: "Learning Legend" },
+      { text: "Breaks feel better when you crush the work first.", author: "Science Squad" }
+    ];
+
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+      const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+
+    function updateTimerVisual() {
+      const total = isWorkMode ? WORK_DURATION : BREAK_DURATION;
+      const progress = 1 - remainingSeconds / total;
+      const degrees = Math.floor(progress * 360);
+      timerRing.style.background = `conic-gradient(${isWorkMode ? 'var(--work-color)' : 'var(--break-color)'} ${degrees}deg, rgba(255, 255, 255, 0.9) ${degrees}deg 360deg)`;
+      timerRing.classList.toggle('break', !isWorkMode);
+    }
+
+    function updateStatusUI() {
+      timeDisplay.textContent = formatTime(remainingSeconds);
+      modeIndicator.textContent = isWorkMode ? 'Focus Session' : 'Break Time';
+      statusPill.textContent = isWorkMode ? 'Focus Mode' : 'Break Mode';
+      statusPill.classList.toggle('break', !isWorkMode);
+      startPauseBtn.textContent = isRunning ? 'Pause' : isWorkMode ? 'Start Focus' : 'Start Break';
+      resetBtn.disabled = remainingSeconds === (isWorkMode ? WORK_DURATION : BREAK_DURATION) && !isRunning;
+      updateTimerVisual();
+    }
+
+    function pickNewQuote() {
+      if (!quotes.length) return;
+      let index = Math.floor(Math.random() * quotes.length);
+      if (quotes.length > 1) {
+        while (index === lastQuoteIndex) {
+          index = Math.floor(Math.random() * quotes.length);
+        }
+      }
+      lastQuoteIndex = index;
+      const quote = quotes[index];
+      quoteText.textContent = `"${quote.text}"`;
+      quoteAuthor.textContent = `— ${quote.author}`;
+    }
+
+    function switchMode() {
+      if (isWorkMode) {
+        completedWorkSessions += 1;
+        cycleCount.innerHTML = `Completed focus blocks today: <strong>${completedWorkSessions}</strong>`;
+      }
+
+      isWorkMode = !isWorkMode;
+      remainingSeconds = isWorkMode ? WORK_DURATION : BREAK_DURATION;
+      pickNewQuote();
+      if (isRunning) {
+        lastUpdateTimestamp = Date.now();
+      }
+      playChime();
+      updateStatusUI();
+    }
+
+    function applyElapsedSeconds(totalSeconds) {
+      let secondsLeft = totalSeconds;
+      while (secondsLeft > 0 && isRunning) {
+        if (remainingSeconds <= 0) {
+          switchMode();
+          continue;
+        }
+        if (secondsLeft >= remainingSeconds) {
+          secondsLeft -= remainingSeconds;
+          remainingSeconds = 0;
+          updateStatusUI();
+          switchMode();
+        } else {
+          remainingSeconds -= secondsLeft;
+          secondsLeft = 0;
+          updateStatusUI();
+        }
+      }
+    }
+
+    function tick() {
+      if (!isRunning || lastUpdateTimestamp === null) return;
+      const now = Date.now();
+      const elapsedMs = now - lastUpdateTimestamp;
+      if (elapsedMs < 1000) return;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      lastUpdateTimestamp = now - (elapsedMs % 1000);
+      applyElapsedSeconds(elapsedSeconds);
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      startPauseBtn.textContent = 'Pause';
+      resetBtn.disabled = false;
+      lastUpdateTimestamp = Date.now();
+      timerId = setInterval(tick, TICK_INTERVAL);
+    }
+
+    function pauseTimer() {
+      isRunning = false;
+      startPauseBtn.textContent = isWorkMode ? 'Resume Focus' : 'Resume Break';
+      lastUpdateTimestamp = null;
+      clearInterval(timerId);
+      timerId = null;
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      isRunning = false;
+      isWorkMode = true;
+      remainingSeconds = WORK_DURATION;
+      completedWorkSessions = 0;
+      cycleCount.innerHTML = 'Completed focus blocks today: <strong>0</strong>';
+      pickNewQuote();
+      updateStatusUI();
+      startPauseBtn.textContent = 'Start Focus';
+      resetBtn.disabled = true;
+    }
+
+    function startPauseHandler() {
+      if (!isRunning) {
+        startTimer();
+      } else {
+        pauseTimer();
+      }
+    }
+
+    async function playChime() {
+      try {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        const duration = 0.4;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(880, context.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(523.25, context.currentTime + duration);
+        gain.gain.setValueAtTime(0.001, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration);
+        setTimeout(() => context.close(), duration * 1200);
+      } catch (err) {
+        // Audio might be blocked; ignore errors silently.
+      }
+    }
+
+    startPauseBtn.addEventListener('click', startPauseHandler);
+    resetBtn.addEventListener('click', resetTimer);
+
+    pickNewQuote();
+    updateStatusUI();
+  </script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Student Picker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+        .controls-panel {
+            flex: 1;
+            max-width: 450px;
+        }
+        .picker-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #5f6368;
+        }
+        textarea, select, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #pick-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            margin-top: 15px;
+        }
+        .roster-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        #save-btn { background-color: #27ae60; }
+        #delete-btn { background-color: #c0392b; }
+        
+        /* Picker Display Styles */
+        #picker-display {
+            width: 100%;
+            height: 200px;
+            border: 3px dashed #bdc3c7;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        #student-name-display {
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #34495e;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .reveal {
+            transform: scale(1.1);
+        }
+        
+        /* Options Styles */
+        .options {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+        #reset-btn {
+            background-color: #f39c12;
+            width: auto;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body onload="loadRosterList()">
+
+    <div class="container">
+        <div class="panel controls-panel">
+            <h1>Student Picker 🎯</h1>
+            <div class="input-group">
+                <label for="rosterSelect">Load Saved Roster</label>
+                <select id="rosterSelect" onchange="loadSelectedRoster()"></select>
+            </div>
+            <div class="input-group">
+                <label for="studentNames">Paste Student Names</label>
+                <textarea id="studentNames" placeholder="Alice Smith&#10;Bob Johnson&#10;..."></textarea>
+            </div>
+            <div class="input-group">
+                <label for="rosterName">Roster Name (for Saving)</label>
+                <input type="text" id="rosterName" placeholder="e.g., Period 3">
+                <div class="roster-buttons">
+                    <button id="save-btn" onclick="saveRoster()">Save</button>
+                    <button id="delete-btn" onclick="deleteRoster()">Delete Selected</button>
+                </div>
+            </div>
+            <button id="pick-btn" onclick="pickStudent()">Pick a Student!</button>
+            <div class="options">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="no-repeat-checkbox">
+                    <label for="no-repeat-checkbox">Don't pick same student twice</label>
+                </div>
+                <button id="reset-btn" onclick="resetAvailableStudents()">Reset</button>
+            </div>
+        </div>
+
+        <div class="panel picker-panel">
+            <h2>The chosen student is...</h2>
+            <div id="picker-display">
+                <h2 id="student-name-display">?</h2>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const studentNamesEl = document.getElementById('studentNames');
+        const rosterNameEl = document.getElementById('rosterName');
+        const rosterSelectEl = document.getElementById('rosterSelect');
+        const nameDisplayEl = document.getElementById('student-name-display');
+        const noRepeatCheckbox = document.getElementById('no-repeat-checkbox');
+
+        let availableStudents = [];
+        let isSpinning = false;
+
+        // --- Roster Management ---
+        function getSavedRosters() {
+            const rosters = localStorage.getItem('studentRosters_picker');
+            return rosters ? JSON.parse(rosters) : {};
+        }
+
+        function loadRosterList() {
+            const rosters = getSavedRosters();
+            rosterSelectEl.innerHTML = '<option value="">-- Select a Roster --</option>';
+            for (const name in rosters) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                rosterSelectEl.appendChild(option);
+            }
+        }
+        
+        function loadSelectedRoster() {
+            const selectedName = rosterSelectEl.value;
+            if (selectedName) {
+                const rosters = getSavedRosters();
+                studentNamesEl.value = rosters[selectedName];
+                rosterNameEl.value = selectedName;
+                resetAvailableStudents(false); // Reset when a new roster is loaded
+            }
+        }
+
+        function saveRoster() {
+            const name = rosterNameEl.value.trim();
+            const names = studentNamesEl.value.trim();
+            if (!name || !names) {
+                alert("Please provide a roster name and student names to save.");
+                return;
+            }
+            const rosters = getSavedRosters();
+            rosters[name] = names;
+            localStorage.setItem('studentRosters_picker', JSON.stringify(rosters));
+            alert(`Roster "${name}" saved!`);
+            loadRosterList();
+        }
+
+        function deleteRoster() {
+            const selectedName = rosterSelectEl.value;
+            if (!selectedName) {
+                alert("Please select a roster to delete.");
+                return;
+            }
+            if (confirm(`Are you sure you want to delete "${selectedName}"?`)) {
+                const rosters = getSavedRosters();
+                delete rosters[selectedName];
+                localStorage.setItem('studentRosters_picker', JSON.stringify(rosters));
+                alert(`Roster "${selectedName}" deleted.`);
+                loadRosterList();
+            }
+        }
+
+        // --- Picker Logic ---
+        function resetAvailableStudents(showAlert = true) {
+            const allStudents = studentNamesEl.value.trim().split('\n').filter(name => name.trim() !== '');
+            availableStudents = [...allStudents];
+            if (showAlert) alert(`Picker has been reset. ${availableStudents.length} students are now available.`);
+        }
+
+        function pickStudent() {
+            if (isSpinning) return;
+
+            let studentPool = studentNamesEl.value.trim().split('\n').filter(name => name.trim() !== '');
+
+            if (noRepeatCheckbox.checked) {
+                if (availableStudents.length === 0) {
+                    alert("All students have been picked! Resetting the list.");
+                    resetAvailableStudents(false);
+                }
+                studentPool = availableStudents;
+            }
+
+            if (studentPool.length === 0) {
+                alert("Please add students to the list first.");
+                return;
+            }
+
+            isSpinning = true;
+            nameDisplayEl.classList.remove('reveal');
+            
+            // The "slot machine" animation
+            const animationDuration = 2500; // 2.5 seconds
+            const intervalTime = 75; // ms
+            let animationInterval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * studentPool.length);
+                nameDisplayEl.textContent = studentPool[randomIndex];
+            }, intervalTime);
+
+            // Stop the animation and pick the final student
+            setTimeout(() => {
+                clearInterval(animationInterval);
+
+                const finalIndex = Math.floor(Math.random() * studentPool.length);
+                const chosenStudent = studentPool[finalIndex];
+                nameDisplayEl.textContent = chosenStudent;
+                nameDisplayEl.classList.add('reveal');
+
+                if (noRepeatCheckbox.checked) {
+                    availableStudents = availableStudents.filter(student => student !== chosenStudent);
+                }
+                
+                isSpinning = false;
+            }, animationDuration);
+        }
+    </script>
+</body>
+</html>

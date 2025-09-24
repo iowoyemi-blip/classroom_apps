@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher's Toolkit</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f4f7f9;
+            --card-background: white;
+            --text-color: #333;
+            --border-color: #dfe6e9;
+            --success-color: #27ae60;
+            --danger-color: #c0392b;
+            --warning-color: #f39c12;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        /* --- Main Menu & Roster Management --- */
+        #main-menu {
+            padding: 30px;
+            background-color: var(--card-background);
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            max-width: 900px;
+            margin: 20px auto;
+        }
+        #main-menu h1 { text-align: center; color: var(--secondary-color); }
+        .roster-management {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 25px;
+            margin-bottom: 25px;
+        }
+        #studentNames { grid-column: 1 / -1; min-height: 150px; }
+        .tool-selection { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .tool-btn {
+            background: var(--primary-color);
+            color: white; border: none; border-radius: 12px; padding: 20px 30px;
+            font-size: 1.2em; font-weight: bold; cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .tool-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        /* --- General Tool Styles --- */
+        .tool { display: none; }
+        .tool.active { display: block; }
+        .tool-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #eee; max-width: 1200px; margin-left: auto; margin-right: auto;}
+        .back-to-menu-btn { background-color: #7f8c8d; color: white; padding: 10px 20px; cursor: pointer; font-weight: bold; border:none; border-radius: 8px;}
+        .container { max-width: 1200px; margin: auto; }
+        .panel, .card { background: var(--card-background); padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #5f6368; }
+        textarea, select, input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { cursor: pointer; border-radius: 8px; border: none; font-weight: bold; color: white; padding: 12px 15px; transition: background-color .2s ease; }
+        
+        /* --- Timer Specific Styles --- */
+        #timer-tool .encouraging-banner {
+            background: linear-gradient(45deg, #1abc9c, #16a085);
+            color: white; text-align: center; padding: 25px;
+            border-radius: 12px; font-size: 1.5em; font-weight: bold; margin-bottom: 20px;
+        }
+        #timer-display { font-size: 8rem; font-weight: bold; text-align: center; color: var(--secondary-color); margin: 20px 0; }
+        .timer-inputs, .timer-controls { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
+        .timer-controls button { font-size: 1.2em; padding: 15px 30px; }
+
+        /* --- Group Randomizer Specific Styles --- */
+        #gr-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+        .group-card { background-color: #e8f0fe; border: 1px solid #d2e3fc; padding: 15px; border-radius: 8px; }
+        .group-card h3 { color: #2980b9; margin-top: 0; border-bottom: 1px solid #d2e3fc; padding-bottom: 10px;}
+        .group-card ul { list-style-type: none; padding-left: 0; }
+        .group-card li { background: #fff; padding: 8px; border-radius: 4px; margin-top: 5px;}
+
+        /* --- Seating Chart Specific Styles --- */
+        #sc-seating-chart { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
+        .seat {
+            border: 2px solid var(--border-color); border-radius: 12px; padding: 10px; text-align: center;
+            aspect-ratio: 1.5 / 1; display: flex; flex-direction: column; justify-content: space-between;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .seat-number { font-weight: bold; color: #7f8c8d; align-self: flex-start; }
+        .student-name { font-weight: 600; color: var(--secondary-color); font-size: 1.1em; }
+        .seat.occupied { background-color: #e9f3fb; border-color: #a9cce3; }
+
+        /* --- Student Picker Specific Styles --- */
+        #student-picker-tool .container { display: flex; gap: 30px; align-items: stretch; }
+        #student-picker-tool .controls-panel { flex: 1; max-width: 400px; }
+        #student-picker-tool .picker-panel { flex: 1.5; text-align: center; display: flex; flex-direction: column; justify-content: center;}
+        #student-picker-tool #sp-picker-display {
+            width: 100%; height: 250px; border: 3px dashed #bdc3c7;
+            display: flex; justify-content: center; align-items: center; margin-top: 20px;
+        }
+        #student-picker-tool #sp-student-name-display { font-size: 3.5em; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="main-menu">
+        <h1>Teacher's Toolkit 🧰</h1>
+        <div class="roster-management">
+            <textarea id="studentNames" placeholder="Paste student names here (for roster tools)..."></textarea>
+            <select id="rosterSelect"></select>
+            <input type="text" id="rosterName" placeholder="Roster Name (for saving)">
+            <button id="save-btn" style="background-color: var(--success-color);">Save Roster</button>
+            <button id="delete-btn" style="background-color: var(--danger-color);">Delete Selected</button>
+        </div>
+        <h2>Choose a Tool:</h2>
+        <div class="tool-selection">
+            <button class="tool-btn" onclick="activateTool('group-randomizer-tool')">Group Randomizer</button>
+            <button class="tool-btn" onclick="activateTool('seating-chart-tool')">Seating Chart</button>
+            <button class="tool-btn" onclick="activateTool('student-picker-tool')">Student Picker</button>
+            <button class="tool-btn" onclick="activateTool('timer-tool')" style="background-color: #8e44ad;">Classroom Timer</button>
+        </div>
+    </div>
+
+    <div id="group-randomizer-tool" class="tool"></div>
+    <div id="seating-chart-tool" class="tool"></div>
+    <div id="student-picker-tool" class="tool"></div>
+    <div id="timer-tool" class="tool"></div>
+
+    <script>
+    // ======================= GLOBAL STATE & NAVIGATION =======================
+    const studentNamesEl = document.getElementById('studentNames');
+    const rosterNameEl = document.getElementById('rosterName');
+    const rosterSelectEl = document.getElementById('rosterSelect');
+    let currentStudents = [];
+
+    function showView(viewId) {
+        document.getElementById('main-menu').style.display = 'none';
+        document.querySelectorAll('.tool').forEach(tool => tool.style.display = 'none');
+        document.getElementById(viewId).style.display = 'block';
+    }
+
+    function activateTool(toolId) {
+        if (toolId !== 'timer-tool') {
+            currentStudents = studentNamesEl.value.trim().split('\n').filter(name => name.trim() !== '');
+            if (currentStudents.length === 0) {
+                alert("Please enter some student names first for this tool!");
+                return;
+            }
+        }
+        
+        if (toolId === 'group-randomizer-tool') setupGroupRandomizer();
+        if (toolId === 'seating-chart-tool') setupSeatingChart();
+        if (toolId === 'student-picker-tool') setupStudentPicker();
+        if (toolId === 'timer-tool') setupTimer();
+        
+        showView(toolId);
+    }
+    
+    function getRosters() { return JSON.parse(localStorage.getItem('teacherToolkitRosters')) || {}; }
+    function saveRosters(rosters) { localStorage.setItem('teacherToolkitRosters', JSON.stringify(rosters)); }
+    function loadRosterList() {
+        const rosters = getRosters();
+        rosterSelectEl.innerHTML = '<option value="">-- Load a Saved Roster --</option>';
+        for (const name in rosters) rosterSelectEl.innerHTML += `<option value="${name}">${name}</option>`;
+    }
+    document.getElementById('rosterSelect').addEventListener('change', () => {
+        const selectedName = rosterSelectEl.value;
+        if (selectedName) { studentNamesEl.value = getRosters()[selectedName]; rosterNameEl.value = selectedName; }
+    });
+    document.getElementById('save-btn').addEventListener('click', () => {
+        const name = rosterNameEl.value.trim(); const names = studentNamesEl.value.trim();
+        if (!name || !names) { alert("Provide a roster name and student list."); return; }
+        const rosters = getRosters(); rosters[name] = names; saveRosters(rosters);
+        alert(`Roster "${name}" saved!`); loadRosterList();
+    });
+    document.getElementById('delete-btn').addEventListener('click', () => {
+        const selectedName = rosterSelectEl.value;
+        if (!selectedName) { alert("Select a roster to delete."); return; }
+        if (confirm(`Delete "${selectedName}"?`)) {
+            const rosters = getRosters(); delete rosters[selectedName]; saveRosters(rosters);
+            alert(`Roster "${selectedName}" deleted.`); rosterNameEl.value = ''; studentNamesEl.value = ''; loadRosterList();
+        }
+    });
+
+    // ======================= TIMER TOOL =======================
+    let timerInterval = null;
+    let timeRemaining = 0;
+    function setupTimer() {
+        const toolDiv = document.getElementById('timer-tool');
+        toolDiv.innerHTML = `
+            <div class="tool-header"><h2>Classroom Timer</h2><button class="back-to-menu-btn" onclick="showView('main-menu')">Back to Menu</button></div>
+            <div class="container panel">
+                <div class="encouraging-banner">Focus on the task and do your best work! You've got this! ✨</div>
+                <div id="timer-display">00:00</div>
+                <div class="timer-inputs">
+                    <div><label for="minutes-input">Minutes</label><select id="minutes-input"></select></div>
+                    <div><label for="seconds-input">Seconds</label><select id="seconds-input"></select></div>
+                </div>
+                <div class="timer-controls">
+                    <button id="start-pause-btn" style="background-color: var(--success-color);">Start</button>
+                    <button id="reset-btn" style="background-color: var(--warning-color);">Reset</button>
+                </div>
+            </div>`;
+
+        const minutesSelect = document.getElementById('minutes-input');
+        const secondsSelect = document.getElementById('seconds-input');
+        for (let i = 0; i <= 90; i++) minutesSelect.innerHTML += `<option value="${i}">${i}</option>`;
+        for (let i = 0; i < 60; i++) secondsSelect.innerHTML += `<option value="${i}">${String(i).padStart(2, '0')}</option>`;
+        const timeDisplay = document.getElementById('timer-display');
+        const startPauseBtn = document.getElementById('start-pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const timesUpSound = new Audio('data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAABPSUNZAAAAAABoWVdOZwAAACMAAAAeAAAAAABaTEVOQwAAABMAAAASAAAAAEVYVFMAAAAUAAAAEAAAAAAAAAAAAAAAABJNFkAAAAsAAARTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//tAwA8B4Ah4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8AAABpYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhY-larkaa');
+
+        function updateDisplay() {
+            if (timeRemaining < 0) return;
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            timeDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        startPauseBtn.addEventListener('click', () => {
+            if (timerInterval) { // Pause
+                clearInterval(timerInterval);
+                timerInterval = null;
+                startPauseBtn.textContent = 'Resume';
+                startPauseBtn.style.backgroundColor = 'var(--primary-color)';
+            } else { // Start or Resume
+                if (timeRemaining <= 0) {
+                    const mins = parseInt(minutesSelect.value);
+                    const secs = parseInt(secondsSelect.value);
+                    timeRemaining = (mins * 60) + secs;
+                }
+                if (timeRemaining > 0) {
+                    startPauseBtn.textContent = 'Pause';
+                    startPauseBtn.style.backgroundColor = 'var(--warning-color)';
+                    timerInterval = setInterval(() => {
+                        timeRemaining--;
+                        updateDisplay();
+                        if (timeRemaining <= 0) {
+                            clearInterval(timerInterval);
+                            timerInterval = null;
+                            timesUpSound.play();
+                            alert("Time's up!");
+                            startPauseBtn.textContent = 'Start';
+                            startPauseBtn.style.backgroundColor = 'var(--success-color)';
+                        }
+                    }, 1000);
+                }
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            const mins = parseInt(minutesSelect.value);
+            const secs = parseInt(secondsSelect.value);
+            timeRemaining = (mins * 60) + secs;
+            updateDisplay();
+            startPauseBtn.textContent = 'Start';
+            startPauseBtn.style.backgroundColor = 'var(--success-color)';
+        });
+        
+        minutesSelect.addEventListener('change', () => resetBtn.click());
+        secondsSelect.addEventListener('change', () => resetBtn.click());
+        resetBtn.click(); // Initialize display
+    }
+
+    // ======================= GROUP RANDOMIZER =======================
+    function setupGroupRandomizer() {
+        const toolDiv = document.getElementById('group-randomizer-tool');
+        toolDiv.innerHTML = `
+            <div class="tool-header"><h2>Group Randomizer</h2><button class="back-to-menu-btn" onclick="showView('main-menu')">Back to Menu</button></div>
+            <div class="container panel">
+                <div id="gr-controls" style="display: flex; gap: 20px; margin-bottom: 20px;">
+                    <div><label>Number of Groups:</label><input type="number" id="gr-numGroups" min="1"></div>
+                    <div><label>Max Students per Group:</label><input type="number" id="gr-maxStudents" min="1"></div>
+                    <button id="gr-generate-btn" style="background-color: #16a085; align-self: flex-end;">Generate Groups</button>
+                </div><div id="gr-results"></div></div>`;
+        document.getElementById('gr-generate-btn').addEventListener('click', () => {
+            const numGroups = document.getElementById('gr-numGroups').value;
+            const maxStudents = document.getElementById('gr-maxStudents').value;
+            const resultsDiv = document.getElementById('gr-results');
+            let students = [...currentStudents];
+            for (let i = students.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [students[i], students[j]] = [students[j], students[i]]; }
+            let groups = [];
+            if (numGroups) { for (let i = 0; i < numGroups; i++) groups.push([]); students.forEach((s, i) => groups[i % numGroups].push(s));
+            } else if (maxStudents) { for (let i = 0; i < students.length; i += Number(maxStudents)) { groups.push(students.slice(i, i + Number(maxStudents))); }
+            } else { alert("Please enter either number of groups or max students."); return; }
+            resultsDiv.innerHTML = '';
+            groups.forEach((group, i) => {
+                if (group.length === 0) return;
+                const card = document.createElement('div'); card.className = 'group-card';
+                card.innerHTML = `<h3>Group ${i + 1}</h3><ul>${group.map(s => `<li>${s}</li>`).join('')}</ul>`;
+                resultsDiv.appendChild(card);
+            });
+        });
+    }
+
+    // ======================= SEATING CHART =======================
+    function setupSeatingChart() {
+        const toolDiv = document.getElementById('seating-chart-tool');
+        toolDiv.innerHTML = `
+            <div class="tool-header"><h2>Seating Chart</h2><button class="back-to-menu-btn" onclick="showView('main-menu')">Back to Menu</button></div>
+            <div class="container panel"><div id="sc-seating-chart"></div>
+            <div id="sc-unassigned" style="display:none; margin-top:15px;"><h3>Unassigned Students:</h3><ul id="sc-unassigned-list"></ul></div></div>`;
+        const chartEl = document.getElementById('sc-seating-chart'); const totalSeats = 25;
+        let students = [...currentStudents];
+        for (let i = students.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [students[i], students[j]] = [students[j], students[i]]; }
+        chartEl.innerHTML = ''; for (let i = 1; i <= totalSeats; i++) { chartEl.innerHTML += `<div class="seat" id="seat-${i}"><span class="seat-number">${i}</span><span class="student-name"></span></div>`; }
+        const unassignedContainer = document.getElementById('sc-unassigned'); const unassignedList = document.getElementById('sc-unassigned-list');
+        students.forEach((student, i) => {
+            if (i < totalSeats) {
+                const seatEl = document.getElementById(`seat-${i + 1}`);
+                setTimeout(() => { seatEl.querySelector('.student-name').textContent = student; seatEl.classList.add('occupied'); }, i * 60);
+            } else { unassignedContainer.style.display = 'block'; unassignedList.innerHTML += `<li>${student}</li>`; }
+        });
+    }
+
+    // ======================= STUDENT PICKER =======================
+    let sp_availableStudents = []; let sp_isSpinning = false;
+    function setupStudentPicker() {
+        const toolDiv = document.getElementById('student-picker-tool');
+        toolDiv.innerHTML = `
+            <div class="tool-header"><h2>Student Picker</h2><button class="back-to-menu-btn" onclick="showView('main-menu')">Back to Menu</button></div>
+            <div class="container">
+                <div class="panel controls-panel">
+                    <h3>Controls</h3>
+                    <button id="sp-pick-btn" style="background-color: #16a085; padding: 15px; font-size: 1.2em;">Pick a Student!</button>
+                    <div style="margin-top: 20px;">
+                        <input type="checkbox" id="sp-no-repeat"><label for="sp-no-repeat"> Don't pick same student twice</label>
+                    </div>
+                    <button id="sp-reset-btn" style="background-color: var(--warning-color); margin-top: 10px;">Reset Available Students</button>
+                </div>
+                <div class="panel picker-panel">
+                    <h2>The chosen student is...</h2>
+                    <div id="sp-picker-display"><h2 id="sp-student-name-display">?</h2></div>
+                </div>
+            </div>`;
+        
+        const nameDisplayEl = document.getElementById('sp-student-name-display');
+        const noRepeatCheckbox = document.getElementById('sp-no-repeat');
+        
+        const resetAvailable = (showAlert = true) => {
+            sp_availableStudents = [...currentStudents];
+            if(showAlert) alert(`Picker reset. ${sp_availableStudents.length} students are now available.`);
+        };
+        resetAvailable(false); // Initial population
+
+        document.getElementById('sp-reset-btn').addEventListener('click', () => resetAvailable());
+
+        document.getElementById('sp-pick-btn').addEventListener('click', () => {
+            if (sp_isSpinning) return;
+            let studentPool = noRepeatCheckbox.checked ? sp_availableStudents : currentStudents;
+            if (noRepeatCheckbox.checked && studentPool.length === 0) { alert("All students have been picked! Resetting."); resetAvailable(false); studentPool = sp_availableStudents; }
+            if (studentPool.length === 0) { alert("There are no students to pick from."); return; }
+            sp_isSpinning = true;
+            const interval = setInterval(() => { nameDisplayEl.textContent = studentPool[Math.floor(Math.random() * studentPool.length)]; }, 75);
+            setTimeout(() => {
+                clearInterval(interval);
+                const chosen = studentPool[Math.floor(Math.random() * studentPool.length)];
+                nameDisplayEl.textContent = chosen;
+                if (noRepeatCheckbox.checked) { sp_availableStudents = sp_availableStudents.filter(s => s !== chosen); }
+                sp_isSpinning = false;
+            }, 2500);
+        });
+    }
+        
+    // --- Initialize the app ---
+    document.addEventListener('DOMContentLoaded', loadRosterList);
+    </script>
+</body>
+</html>
