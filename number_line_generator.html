@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inequality Number Line Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-white rounded-lg shadow-lg p-6 md:p-8">
+        <header class="text-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Inequality Number Line Generator</h1>
+            <p class="text-gray-600 mt-2">Enter an inequality (e.g., x > 5, y <= -2) to see it graphed on a number line.</p>
+        </header>
+
+        <main>
+            <!-- Input section -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                <input type="text" id="inequality-input" placeholder="e.g., x < 3 or -4 >= y" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                <button id="generate-btn" class="bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Generate
+                </button>
+            </div>
+
+            <!-- Error message container -->
+            <div id="error-message" class="hidden text-red-600 font-medium text-center mb-4 p-3 bg-red-100 rounded-lg"></div>
+
+            <!-- Canvas for number line -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                 <canvas id="number-line-canvas" class="w-full"></canvas>
+            </div>
+        </main>
+
+        <footer class="text-center mt-6 text-sm text-gray-500">
+            <p>A helpful tool for Algebra I students and teachers.</p>
+        </footer>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('number-line-canvas');
+        const ctx = canvas.getContext('2d');
+        const input = document.getElementById('inequality-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const errorMessage = document.getElementById('error-message');
+
+        let DPI = window.devicePixelRatio || 1;
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth * DPI;
+            canvas.height = 100 * DPI; // Fixed height
+            canvas.style.width = `${container.clientWidth}px`;
+            canvas.style.height = `100px`;
+            ctx.scale(DPI, DPI);
+        }
+
+        // Parse the inequality string
+        function parseInequality(str) {
+            str = str.trim().replace(/\s+/g, ''); // Remove all whitespace
+
+            // Regex to capture variable, operator, and number
+            const regex = /([a-zA-Z])(>=|<=|>|<)(-?\d*\.?\d+)|(-?\d*\.?\d+)(>=|<=|>|<)([a-zA-Z])/;
+            const match = str.match(regex);
+
+            if (!match) return null;
+
+            if (match[1]) { // Format: x > 5
+                return {
+                    variable: match[1],
+                    operator: match[2],
+                    value: parseFloat(match[3])
+                };
+            } else { // Format: 5 > x
+                let operator = match[5];
+                // Flip the operator
+                if (operator === '>') operator = '<';
+                else if (operator === '<') operator = '>';
+                else if (operator === '>=') operator = '<=';
+                else if (operator === '<=') operator = '>=';
+                return {
+                    variable: match[6],
+                    operator: operator,
+                    value: parseFloat(match[4])
+                };
+            }
+        }
+
+        // Draw the number line
+        function drawNumberLine(inequality) {
+            resizeCanvas();
+            ctx.clearRect(0, 0, canvas.width / DPI, canvas.height / DPI);
+
+            const { value, operator } = inequality;
+            const y_axis = 50;
+            const width = canvas.width / DPI;
+
+            // Determine the range of the number line
+            const rangeSpan = 10;
+            const min = Math.floor(value / rangeSpan) * rangeSpan - rangeSpan;
+            const max = Math.ceil(value / rangeSpan) * rangeSpan + rangeSpan;
+            const totalRange = max - min;
+
+            // Function to convert a number value to an x-coordinate
+            const toX = (num) => (num - min) / totalRange * (width - 80) + 40;
+
+            // Draw main line
+            ctx.beginPath();
+            ctx.moveTo(10, y_axis);
+            ctx.lineTo(width - 10, y_axis);
+            ctx.strokeStyle = '#374151'; // gray-700
+            ctx.lineWidth = 2 * DPI;
+            ctx.stroke();
+
+            // Draw ticks and labels
+            ctx.textAlign = 'center';
+            ctx.font = `${12 * DPI}px Inter`;
+            ctx.fillStyle = '#4b5563'; // gray-600
+
+            for (let i = min; i <= max; i++) {
+                const x = toX(i);
+                ctx.beginPath();
+                ctx.moveTo(x, y_axis - 5 * DPI);
+                ctx.lineTo(x, y_axis + 5 * DPI);
+                ctx.stroke();
+                // Avoid cluttering labels
+                if (i % (Math.ceil(totalRange / 20)) === 0) {
+                     ctx.fillText(i, x, y_axis + 20 * DPI);
+                }
+            }
+
+            // Draw circle for the value
+            const valueX = toX(value);
+            const isOpen = operator === '>' || operator === '<';
+            ctx.beginPath();
+            ctx.arc(valueX, y_axis, 5 * DPI, 0, 2 * Math.PI);
+            ctx.fillStyle = isOpen ? '#f3f4f6' : '#2563eb'; // gray-100 or blue-600
+            ctx.fill();
+            ctx.strokeStyle = '#2563eb'; // blue-600
+            ctx.lineWidth = 2 * DPI;
+            ctx.stroke();
+
+
+            // Draw arrow for the inequality direction
+            const isGreater = operator === '>' || operator === '>=';
+            ctx.beginPath();
+            ctx.moveTo(valueX, y_axis);
+            if (isGreater) {
+                ctx.lineTo(width - 10, y_axis);
+                // Arrowhead
+                ctx.moveTo(width - 10, y_axis);
+                ctx.lineTo(width - 20, y_axis - 5 * DPI);
+                ctx.moveTo(width - 10, y_axis);
+                ctx.lineTo(width - 20, y_axis + 5 * DPI);
+            } else {
+                ctx.lineTo(10, y_axis);
+                 // Arrowhead
+                ctx.moveTo(10, y_axis);
+                ctx.lineTo(20, y_axis - 5 * DPI);
+                ctx.moveTo(10, y_axis);
+                ctx.lineTo(20, y_axis + 5 * DPI);
+            }
+            ctx.stroke();
+        }
+
+        function generate() {
+            const inequalityStr = input.value;
+            if (!inequalityStr) {
+                 errorMessage.textContent = 'Please enter an inequality.';
+                 errorMessage.classList.remove('hidden');
+                 return;
+            }
+
+            const inequality = parseInequality(inequalityStr);
+            if (!inequality) {
+                errorMessage.textContent = 'Invalid inequality format. Please use formats like "x > 5", "y <= -2", or "10 < z".';
+                errorMessage.classList.remove('hidden');
+                ctx.clearRect(0, 0, canvas.width / DPI, canvas.height / DPI);
+            } else {
+                errorMessage.classList.add('hidden');
+                drawNumberLine(inequality);
+            }
+        }
+
+        // Event listeners
+        generateBtn.addEventListener('click', generate);
+        input.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                generate();
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+             // Redraw on resize if there's valid input
+            if (input.value && parseInequality(input.value)) {
+                drawNumberLine(parseInequality(input.value));
+            } else {
+                resizeCanvas(); // just resize an empty canvas
+            }
+        });
+        
+        // Initial setup
+        resizeCanvas();
+
+    </script>
+</body>
+</html>
