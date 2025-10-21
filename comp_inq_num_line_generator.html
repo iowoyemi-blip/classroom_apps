@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inequality Number Line Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-white rounded-lg shadow-lg p-6 md:p-8">
+        <header class="text-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Inequality Number Line Generator</h1>
+            <p class="text-gray-600 mt-2">Enter an inequality and customize the number line.</p>
+        </header>
+
+        <main>
+            <!-- Input section -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                <input type="text" id="inequality-input" placeholder="e.g., -2 < x <= 5  or  x < 0 or x >= 10" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                <button id="generate-btn" class="bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Generate
+                </button>
+            </div>
+
+            <!-- Number line settings -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div>
+                    <label for="start-input" class="block text-sm font-medium text-gray-600">Start</label>
+                    <input type="number" id="start-input" value="-10" class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="end-input" class="block text-sm font-medium text-gray-600">End</label>
+                    <input type="number" id="end-input" value="10" class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="partition-input" class="block text-sm font-medium text-gray-600">Partitions (Step)</label>
+                    <input type="number" id="partition-input" value="1" min="0.1" step="0.1" class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Error message container -->
+            <div id="error-message" class="hidden text-red-600 font-medium text-center mb-4 p-3 bg-red-100 rounded-lg"></div>
+
+            <!-- Canvas for number line -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                 <canvas id="number-line-canvas" class="w-full"></canvas>
+            </div>
+        </main>
+
+        <footer class="text-center mt-6 text-sm text-gray-500">
+            <p>A helpful tool for Algebra I students and teachers.</p>
+        </footer>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('number-line-canvas');
+        const ctx = canvas.getContext('2d');
+        const input = document.getElementById('inequality-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const errorMessage = document.getElementById('error-message');
+        const startInput = document.getElementById('start-input');
+        const endInput = document.getElementById('end-input');
+        const partitionInput = document.getElementById('partition-input');
+
+        let DPI = window.devicePixelRatio || 1;
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth * DPI;
+            canvas.height = 100 * DPI;
+            canvas.style.width = `${container.clientWidth}px`;
+            canvas.style.height = `100px`;
+            ctx.scale(DPI, DPI);
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        function parseSingleInequality(str) {
+            const regex = /([a-zA-Z])\s*(>=|<=|>|<)\s*(-?\d*\.?\d+)|(-?\d*\.?\d+)\s*(>=|<=|>|<)\s*([a-zA-Z])/;
+            const match = str.match(regex);
+            if (!match) return null;
+            if (match[1]) {
+                return { variable: match[1], operator: match[2], value: parseFloat(match[3]) };
+            } else {
+                let op = match[5];
+                if (op === '>') op = '<'; else if (op === '<') op = '>';
+                else if (op === '>=') op = '<='; else if (op === '<=') op = '>=';
+                return { variable: match[6], operator: op, value: parseFloat(match[4]) };
+            }
+        }
+        
+        function parseInequality(str) {
+            str = str.trim();
+            const lowerStr = str.toLowerCase();
+
+            // Check for "or"
+            if (lowerStr.includes('or')) {
+                const parts = lowerStr.split('or').map(s => s.trim());
+                if (parts.length === 2) {
+                    const i1 = parseSingleInequality(parts[0]);
+                    const i2 = parseSingleInequality(parts[1]);
+                    if (i1 && i2) return { type: 'or', parts: [i1, i2] };
+                }
+            }
+            
+            // Check for "and"
+            if (lowerStr.includes('and')) {
+                const parts = lowerStr.split('and').map(s => s.trim());
+                if (parts.length === 2) {
+                    const i1 = parseSingleInequality(parts[0]);
+                    const i2 = parseSingleInequality(parts[1]);
+                    if (i1 && i2) return { type: 'and', parts: [i1, i2] };
+                }
+            }
+
+            // Check for compact form like -2 < x <= 5
+            const compactRegex = /(-?\d*\.?\d+)\s*(<=|<)\s*([a-zA-Z])\s*(<=|<)\s*(-?\d*\.?\d+)/;
+            const compactMatch = str.match(compactRegex);
+            if (compactMatch) {
+                const val1 = parseFloat(compactMatch[1]);
+                const op1 = compactMatch[2];
+                const variable = compactMatch[3];
+                const op2 = compactMatch[4];
+                const val2 = parseFloat(compactMatch[5]);
+                
+                const inequality1 = { variable, operator: op1 === '<' ? '>' : '>=', value: val1 };
+                const inequality2 = { variable, operator: op2, value: val2 };
+                return { type: 'and', parts: [inequality1, inequality2] };
+            }
+            
+            // Fallback to simple inequality
+            const simple = parseSingleInequality(str);
+            if (simple) return { type: 'simple', parts: [simple] };
+
+            return null; // No valid format found
+        }
+
+        function drawNumberLine(data) {
+            resizeCanvas();
+            ctx.clearRect(0, 0, canvas.width / DPI, canvas.height / DPI);
+
+            const y_axis = 50;
+            const width = canvas.width / DPI;
+            const min = parseFloat(startInput.value);
+            const max = parseFloat(endInput.value);
+            const step = parseFloat(partitionInput.value);
+
+            if (isNaN(min) || isNaN(max) || isNaN(step) || min >= max || step <= 0) {
+                showError('Invalid number line settings. Ensure Start < End and Partitions > 0.');
+                return;
+            }
+            hideError();
+
+            const totalRange = max - min;
+            const toX = (num) => (num - min) / totalRange * (width - 80) + 40;
+
+            // Draw base line and ticks
+            ctx.beginPath();
+            ctx.moveTo(10, y_axis);
+            ctx.lineTo(width - 10, y_axis);
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 2 * DPI;
+            ctx.stroke();
+            ctx.textAlign = 'center';
+            ctx.font = `${12 * DPI}px Inter`;
+            ctx.fillStyle = '#4b5563';
+            for (let i = min; i <= max; i += step) {
+                const x = toX(i);
+                ctx.beginPath();
+                ctx.moveTo(x, y_axis - 5 * DPI);
+                ctx.lineTo(x, y_axis + 5 * DPI);
+                ctx.stroke();
+                ctx.fillText(Number(i.toFixed(2)), x, y_axis + 20 * DPI);
+            }
+
+            // --- Drawing Logic for Inequalities ---
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 3 * DPI;
+
+            const drawCircle = (x, isOpen) => {
+                ctx.beginPath();
+                ctx.arc(x, y_axis, 5 * DPI, 0, 2 * Math.PI);
+                ctx.fillStyle = isOpen ? '#f3f4f6' : '#2563eb';
+                ctx.fill();
+                ctx.stroke();
+            };
+
+            const drawRay = (x, isGreater) => {
+                ctx.beginPath();
+                ctx.moveTo(x, y_axis);
+                if (isGreater) {
+                    ctx.lineTo(width - 10, y_axis);
+                    ctx.moveTo(width - 10, y_axis);
+                    ctx.lineTo(width - 20, y_axis - 5 * DPI);
+                    ctx.moveTo(width - 10, y_axis);
+                    ctx.lineTo(width - 20, y_axis + 5 * DPI);
+                } else {
+                    ctx.lineTo(10, y_axis);
+                    ctx.moveTo(10, y_axis);
+                    ctx.lineTo(20, y_axis - 5 * DPI);
+                    ctx.moveTo(10, y_axis);
+                    ctx.lineTo(20, y_axis + 5 * DPI);
+                }
+                ctx.stroke();
+            };
+            
+            if (data.type === 'simple') {
+                const { value, operator } = data.parts[0];
+                const valueX = toX(value);
+                const isOpen = operator === '>' || operator === '<';
+                const isGreater = operator === '>' || operator === '>=';
+                drawCircle(valueX, isOpen);
+                drawRay(valueX, isGreater);
+            } else if (data.type === 'and') {
+                const v1 = data.parts[0].value;
+                const v2 = data.parts[1].value;
+                const minVal = Math.min(v1, v2);
+                const maxVal = Math.max(v1, v2);
+                
+                const part1 = data.parts.find(p => p.value === minVal);
+                const part2 = data.parts.find(p => p.value === maxVal);
+                
+                const isOpen1 = part1.operator === '>' || part1.operator === '<';
+                const isOpen2 = part2.operator === '>' || part2.operator === '<';
+                
+                const x1 = toX(minVal);
+                const x2 = toX(maxVal);
+
+                drawCircle(x1, isOpen1);
+                drawCircle(x2, isOpen2);
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y_axis);
+                ctx.lineTo(x2, y_axis);
+                ctx.stroke();
+
+            } else if (data.type === 'or') {
+                data.parts.forEach(part => {
+                    const { value, operator } = part;
+                    const valueX = toX(value);
+                    const isOpen = operator === '>' || operator === '<';
+                    const isGreater = operator === '>' || operator === '>=';
+                    drawCircle(valueX, isOpen);
+                    drawRay(valueX, isGreater);
+                });
+            }
+        }
+
+        function generate() {
+            const inequalityStr = input.value;
+            if (!inequalityStr) {
+                showError('Please enter an inequality.');
+                return;
+            }
+
+            const parsedData = parseInequality(inequalityStr);
+            if (!parsedData) {
+                showError('Invalid inequality format. Use formats like "x > 5", "-1 < y <= 3", or "z < 0 or z > 5".');
+                ctx.clearRect(0, 0, canvas.width / DPI, canvas.height / DPI);
+            } else {
+                const values = parsedData.parts.map(p => p.value);
+                const minVal = Math.min(...values);
+                const maxVal = Math.max(...values);
+                
+                const minRange = parseFloat(startInput.value);
+                const maxRange = parseFloat(endInput.value);
+
+                if (minVal < minRange || maxVal > maxRange) {
+                    const span = Math.max(10, (maxVal - minVal) * 0.2);
+                    startInput.value = Math.floor(minVal) - span;
+                    endInput.value = Math.ceil(maxVal) + span;
+                }
+                
+                drawNumberLine(parsedData);
+            }
+        }
+
+        generateBtn.addEventListener('click', generate);
+        input.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') generate();
+        });
+        
+        [startInput, endInput, partitionInput].forEach(el => {
+            el.addEventListener('change', () => {
+                if (input.value) generate();
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (input.value && parseInequality(input.value)) {
+                drawNumberLine(parseInequality(input.value));
+            } else {
+                resizeCanvas();
+            }
+        });
+        
+        resizeCanvas();
+    </script>
+</body>
+</html>
+
+
