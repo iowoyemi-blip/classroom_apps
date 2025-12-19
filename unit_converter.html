@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Unit Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Remove spinner arrows from number inputs for a cleaner look */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card-shadow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
+
+    <!-- Navbar -->
+    <nav class="bg-indigo-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-calculator text-2xl"></i>
+                    <span class="font-bold text-xl tracking-wide">Classroom Converter</span>
+                </div>
+                <button onclick="clearAll()" class="bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors border border-indigo-400">
+                    <i class="fa-solid fa-rotate-left mr-2"></i>Reset All
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <p class="text-slate-500 mb-6 text-center italic">Enter a value in any field to see the conversion instantly.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- 1. Temperature -->
+            <div class="bg-white rounded-xl p-6 card-shadow border-t-4 border-red-500">
+                <div class="flex items-center mb-4 text-red-600">
+                    <i class="fa-solid fa-temperature-half text-xl mr-2"></i>
+                    <h2 class="text-lg font-bold uppercase tracking-wider">Temperature</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Celsius (°C)</label>
+                        <input type="number" id="celsius" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:border-red-500 outline-none transition text-lg font-mono" oninput="convertTemp('C')">
+                    </div>
+                    
+                    <div class="flex justify-center text-slate-300">
+                        <i class="fa-solid fa-arrow-right-arrow-left rotate-90"></i>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Fahrenheit (°F)</label>
+                        <input type="number" id="fahrenheit" placeholder="32" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:border-red-500 outline-none transition text-lg font-mono" oninput="convertTemp('F')">
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <code class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded">F = (C × 9/5) + 32</code>
+                </div>
+            </div>
+
+            <!-- 2. Length (Small) -->
+            <div class="bg-white rounded-xl p-6 card-shadow border-t-4 border-blue-500">
+                <div class="flex items-center mb-4 text-blue-600">
+                    <i class="fa-solid fa-ruler text-xl mr-2"></i>
+                    <h2 class="text-lg font-bold uppercase tracking-wider">Length (Small)</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Centimeters (cm)</label>
+                        <input type="number" id="cm" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition text-lg font-mono" oninput="convertLengthSmall('cm')">
+                    </div>
+
+                    <div class="flex justify-center text-slate-300">
+                        <i class="fa-solid fa-arrow-right-arrow-left rotate-90"></i>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Inches (in)</label>
+                        <input type="number" id="inches" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition text-lg font-mono" oninput="convertLengthSmall('in')">
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <code class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded">1 in ≈ 2.54 cm</code>
+                </div>
+            </div>
+
+            <!-- 3. Length (Large) -->
+            <div class="bg-white rounded-xl p-6 card-shadow border-t-4 border-indigo-500">
+                <div class="flex items-center mb-4 text-indigo-600">
+                    <i class="fa-solid fa-road text-xl mr-2"></i>
+                    <h2 class="text-lg font-bold uppercase tracking-wider">Distance</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Kilometers (km)</label>
+                        <input type="number" id="km" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition text-lg font-mono" oninput="convertLengthLarge('km')">
+                    </div>
+
+                    <div class="flex justify-center text-slate-300">
+                        <i class="fa-solid fa-arrow-right-arrow-left rotate-90"></i>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Miles (mi)</label>
+                        <input type="number" id="miles" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition text-lg font-mono" oninput="convertLengthLarge('mi')">
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <code class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded">1 mi ≈ 1.609 km</code>
+                </div>
+            </div>
+
+            <!-- 4. Volume -->
+            <div class="bg-white rounded-xl p-6 card-shadow border-t-4 border-cyan-500">
+                <div class="flex items-center mb-4 text-cyan-600">
+                    <i class="fa-solid fa-glass-water text-xl mr-2"></i>
+                    <h2 class="text-lg font-bold uppercase tracking-wider">Volume</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Liters (L)</label>
+                        <input type="number" id="liters" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-200 focus:border-cyan-500 outline-none transition text-lg font-mono" oninput="convertVolume('L')">
+                    </div>
+
+                    <div class="flex justify-center text-slate-300">
+                        <i class="fa-solid fa-arrow-right-arrow-left rotate-90"></i>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Gallons (US gal)</label>
+                        <input type="number" id="gallons" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-200 focus:border-cyan-500 outline-none transition text-lg font-mono" oninput="convertVolume('gal')">
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <code class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded">1 gal ≈ 3.785 L</code>
+                </div>
+            </div>
+
+            <!-- 5. Weight (Small) -->
+            <div class="bg-white rounded-xl p-6 card-shadow border-t-4 border-emerald-500">
+                <div class="flex items-center mb-4 text-emerald-600">
+                    <i class="fa-solid fa-scale-unbalanced text-xl mr-2"></i>
+                    <h2 class="text-lg font-bold uppercase tracking-wider">Weight (Small)</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Grams (g)</label>
+                        <input type="number" id="grams" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition text-lg font-mono" oninput="convertWeightSmall('g')">
+                    </div>
+
+                    <div class="flex justify-center text-slate-300">
+                        <i class="fa-solid fa-arrow-right-arrow-left rotate-90"></i>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Ounces (oz)</label>
+                        <input type="number" id="ounces" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition text-lg font-mono" oninput="convertWeightSmall('oz')">
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <code class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded">1 oz ≈ 28.35 g</code>
+                </div>
+            </div>
+
+            <!-- 6. Weight (Large) -->
+            <div class="bg-white rounded-xl p-6 card-shadow border-t-4 border-green-600">
+                <div class="flex items-center mb-4 text-green-700">
+                    <i class="fa-solid fa-weight-hanging text-xl mr-2"></i>
+                    <h2 class="text-lg font-bold uppercase tracking-wider">Weight (Large)</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Kilograms (kg)</label>
+                        <input type="number" id="kg" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 outline-none transition text-lg font-mono" oninput="convertWeightLarge('kg')">
+                    </div>
+
+                    <div class="flex justify-center text-slate-300">
+                        <i class="fa-solid fa-arrow-right-arrow-left rotate-90"></i>
+                    </div>
+
+                    <div class="relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Pounds (lbs)</label>
+                        <input type="number" id="pounds" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-500 outline-none transition text-lg font-mono" oninput="convertWeightLarge('lbs')">
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <code class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded">1 kg ≈ 2.205 lbs</code>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Utility to round numbers to prevent floating point errors (e.g. 1.000000004)
+        // We generally use 4 decimal places for precision, but strip trailing zeros.
+        function formatVal(num) {
+            if (!num && num !== 0) return '';
+            return parseFloat(num.toFixed(4));
+        }
+
+        function clearAll() {
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => input.value = '');
+        }
+
+        /* * 1. Temperature 
+         * Formula: F = (C * 9/5) + 32
+         */
+        function convertTemp(source) {
+            const celsiusInput = document.getElementById('celsius');
+            const fahrenheitInput = document.getElementById('fahrenheit');
+
+            if (source === 'C') {
+                const c = parseFloat(celsiusInput.value);
+                if (isNaN(c)) { fahrenheitInput.value = ''; return; }
+                const f = (c * 9/5) + 32;
+                fahrenheitInput.value = formatVal(f);
+            } else {
+                const f = parseFloat(fahrenheitInput.value);
+                if (isNaN(f)) { celsiusInput.value = ''; return; }
+                const c = (f - 32) * 5/9;
+                celsiusInput.value = formatVal(c);
+            }
+        }
+
+        /* * 2. Length (Small) - CM / Inches
+         * 1 inch = 2.54 cm
+         */
+        function convertLengthSmall(source) {
+            const cmInput = document.getElementById('cm');
+            const inInput = document.getElementById('inches');
+            const FACTOR = 2.54;
+
+            if (source === 'cm') {
+                const cm = parseFloat(cmInput.value);
+                if (isNaN(cm)) { inInput.value = ''; return; }
+                inInput.value = formatVal(cm / FACTOR);
+            } else {
+                const inches = parseFloat(inInput.value);
+                if (isNaN(inches)) { cmInput.value = ''; return; }
+                cmInput.value = formatVal(inches * FACTOR);
+            }
+        }
+
+        /* * 3. Length (Large) - KM / Miles
+         * 1 mile = 1.60934 km
+         */
+        function convertLengthLarge(source) {
+            const kmInput = document.getElementById('km');
+            const miInput = document.getElementById('miles');
+            const FACTOR = 1.60934;
+
+            if (source === 'km') {
+                const km = parseFloat(kmInput.value);
+                if (isNaN(km)) { miInput.value = ''; return; }
+                miInput.value = formatVal(km / FACTOR);
+            } else {
+                const mi = parseFloat(miInput.value);
+                if (isNaN(mi)) { kmInput.value = ''; return; }
+                kmInput.value = formatVal(mi * FACTOR);
+            }
+        }
+
+        /* * 4. Volume - Liters / Gallons
+         * 1 US Gallon = 3.78541 Liters
+         */
+        function convertVolume(source) {
+            const lInput = document.getElementById('liters');
+            const galInput = document.getElementById('gallons');
+            const FACTOR = 3.78541;
+
+            if (source === 'L') {
+                const l = parseFloat(lInput.value);
+                if (isNaN(l)) { galInput.value = ''; return; }
+                galInput.value = formatVal(l / FACTOR);
+            } else {
+                const gal = parseFloat(galInput.value);
+                if (isNaN(gal)) { lInput.value = ''; return; }
+                lInput.value = formatVal(gal * FACTOR);
+            }
+        }
+
+        /* * 5. Weight (Small) - Grams / Ounces
+         * 1 Ounce = 28.3495 Grams
+         */
+        function convertWeightSmall(source) {
+            const gInput = document.getElementById('grams');
+            const ozInput = document.getElementById('ounces');
+            const FACTOR = 28.3495;
+
+            if (source === 'g') {
+                const g = parseFloat(gInput.value);
+                if (isNaN(g)) { ozInput.value = ''; return; }
+                ozInput.value = formatVal(g / FACTOR);
+            } else {
+                const oz = parseFloat(ozInput.value);
+                if (isNaN(oz)) { gInput.value = ''; return; }
+                gInput.value = formatVal(oz * FACTOR);
+            }
+        }
+
+        /* * 6. Weight (Large) - KG / Pounds
+         * 1 KG = 2.20462 Pounds
+         */
+        function convertWeightLarge(source) {
+            const kgInput = document.getElementById('kg');
+            const lbsInput = document.getElementById('pounds');
+            const FACTOR = 2.20462;
+
+            if (source === 'kg') {
+                const kg = parseFloat(kgInput.value);
+                if (isNaN(kg)) { lbsInput.value = ''; return; }
+                lbsInput.value = formatVal(kg * FACTOR);
+            } else {
+                const lbs = parseFloat(lbsInput.value);
+                if (isNaN(lbs)) { kgInput.value = ''; return; }
+                kgInput.value = formatVal(lbs / FACTOR);
+            }
+        }
+    </script>
+</body>
+</html>
