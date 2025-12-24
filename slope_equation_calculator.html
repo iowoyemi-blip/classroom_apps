@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slope & Linear Equation Calculator</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 450px;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        .point-group {
+            background-color: #f1f5f9;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .point-label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #475569;
+        }
+
+        .coord-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .coord-label {
+            font-weight: bold;
+            color: #64748b;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        #result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-top: 2px solid #e2e8f0;
+            display: none;
+        }
+
+        .result-item {
+            margin-bottom: 1rem;
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text);
+            font-family: 'Times New Roman', Times, serif; /* Math look */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Line Calculator</h2>
+
+    <div class="point-group">
+        <label class="point-label">Point 1</label>
+        <div class="coord-inputs">
+            <span class="coord-label">x₁</span>
+            <input type="number" id="x1" placeholder="0">
+            <span class="coord-label">y₁</span>
+            <input type="number" id="y1" placeholder="0">
+        </div>
+    </div>
+
+    <div class="point-group">
+        <label class="point-label">Point 2</label>
+        <div class="coord-inputs">
+            <span class="coord-label">x₂</span>
+            <input type="number" id="x2" placeholder="0">
+            <span class="coord-label">y₂</span>
+            <input type="number" id="y2" placeholder="0">
+        </div>
+    </div>
+
+    <button onclick="calculateLine()">Calculate Line</button>
+
+    <div id="result">
+        <div class="result-item">
+            <div class="result-label">Slope (m)</div>
+            <div class="result-value" id="slopeOutput"></div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Equation</div>
+            <div class="result-value" id="equationOutput"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateLine() {
+        // Get values
+        const x1 = parseFloat(document.getElementById('x1').value);
+        const y1 = parseFloat(document.getElementById('y1').value);
+        const x2 = parseFloat(document.getElementById('x2').value);
+        const y2 = parseFloat(document.getElementById('y2').value);
+
+        const resultDiv = document.getElementById('result');
+        const slopeOut = document.getElementById('slopeOutput');
+        const eqOut = document.getElementById('equationOutput');
+
+        // Validation
+        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
+            alert("Please enter valid numbers for all coordinates.");
+            return;
+        }
+
+        // Show result area
+        resultDiv.style.display = 'block';
+
+        // Check for Vertical Line (Undefined Slope)
+        if (x1 === x2) {
+            slopeOut.innerText = "Undefined";
+            eqOut.innerText = `x = ${x1}`;
+            return;
+        }
+
+        // Calculate Slope
+        let m = (y2 - y1) / (x2 - x1);
+        
+        // Calculate Y-Intercept (b = y - mx)
+        let b = y1 - (m * x1);
+
+        // --- Formatting Output ---
+
+        // 1. Format Slope Display
+        // Round to 2 decimals if it's a long float, otherwise keep integer
+        let mDisplay = Number.isInteger(m) ? m : parseFloat(m.toFixed(2));
+        slopeOut.innerText = mDisplay;
+
+        // 2. Format Equation Display (y = mx + b)
+        let eqString = "y = ";
+
+        // Handle Slope part
+        if (m === 0) {
+            // Horizontal line (y = b)
+            eqString = `y = ${b}`;
+            eqOut.innerText = eqString;
+            return;
+        } else if (m === 1) {
+            eqString += "x";
+        } else if (m === -1) {
+            eqString += "-x";
+        } else {
+            eqString += `${mDisplay}x`;
+        }
+
+        // Handle Intercept part
+        if (b > 0) {
+            eqString += ` + ${Number.isInteger(b) ? b : parseFloat(b.toFixed(2))}`;
+        } else if (b < 0) {
+            // Subtract the absolute value to avoid "+ -"
+            let absB = Math.abs(b);
+            eqString += ` - ${Number.isInteger(absB) ? absB : parseFloat(absB.toFixed(2))}`;
+        } else {
+            // If b is 0, do nothing (y = 2x)
+        }
+
+        eqOut.innerText = eqString;
+    }
+</script>
+
+</body>
+</html>
