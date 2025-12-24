@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algebra Tutor Toolkit</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding-top: 50px;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+
+        /* Navigation Styles */
+        .nav-section {
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Tool Styles */
+        .tool-panel {
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tool-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        input[type="text"] {
+             width: 100%;
+             padding: 10px;
+             border: 1px solid var(--border);
+             border-radius: 6px;
+             font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #4338ca;
+        }
+
+        .result-box {
+            margin-top: 1.5rem;
+            background-color: #eef2ff;
+            border: 1px solid #c7d2fe;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .math-display {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text);
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .math-note {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 5px;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Fraction Styles */
+        .fraction {
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+            margin: 0 4px;
+        }
+        .frac-top {
+            border-bottom: 2px solid currentColor;
+            padding-bottom: 1px;
+            display: block;
+        }
+        .frac-bottom {
+            padding-top: 1px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Math Tutor Toolkit</h1>
+    
+    <!-- Navigation Menu -->
+    <div class="nav-section">
+        <label>Select Topic:</label>
+        <select id="topicSelector" onchange="switchTool()">
+            <option value="solveTool">Solve Multi-Step Equations</option>
+            <option value="slopeTool">Find Equation from 2 Points</option>
+            <option value="pointSlopeTool">Equation from Point & Slope</option>
+            <option value="stdToSlopeTool">Standard Form &rarr; Slope-Intercept</option>
+            <option value="systemTool">System of Equations (Elimination)</option>
+            <option value="multiplyTool">Multiply Polynomials</option>
+            <option value="factorTool">Factor Trinomial (ax² + bx + c)</option>
+            <option value="quadTool">Quadratic Formula</option>
+            <option value="radicalTool">Simplify Radicals</option>
+        </select>
+    </div>
+
+    <!-- TOOL 0: Multi-Step Solver (NEW) -->
+    <div id="solveTool" class="tool-panel active">
+        <div class="input-group">
+            <label>Equation:</label>
+            <div style="font-size:0.85rem; color:#666; margin-bottom:5px;">Supports: (), fractions (1/2x), variables on both sides</div>
+            <input type="text" id="eqInput" placeholder="e.g. 2(x + 3) - 5 = 1/2x + 4">
+        </div>
+        <button onclick="calcSolve()">Solve Equation</button>
+        <div id="res-solve" class="result-box"></div>
+    </div>
+
+    <!-- TOOL 1: Two Points to Equation -->
+    <div id="slopeTool" class="tool-panel">
+        <div class="input-group">
+            <label>Point 1 (x₁, y₁)</label>
+            <div class="row">
+                <input type="number" id="x1" placeholder="x1">
+                <input type="number" id="y1" placeholder="y1">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Point 2 (x₂, y₂)</label>
+            <div class="row">
+                <input type="number" id="x2" placeholder="x2">
+                <input type="number" id="y2" placeholder="y2">
+            </div>
+        </div>
+        <button onclick="calcTwoPoints()">Find Line</button>
+        <div id="res-slope" class="result-box"></div>
+    </div>
+
+    <!-- TOOL 2: Point & Slope to Equation -->
+    <div id="pointSlopeTool" class="tool-panel">
+        <div class="input-group">
+            <label>Point (x₁, y₁)</label>
+            <div class="row">
+                <input type="number" id="psX" placeholder="x">
+                <input type="number" id="psY" placeholder="y">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Slope (m)</label>
+            <div class="row">
+                <input type="text" id="psM" placeholder="m (e.g. 1/2)">
+            </div>
+        </div>
+        <button onclick="calcPointSlope()">Find Equation</button>
+        <div id="res-ps" class="result-box"></div>
+    </div>
+
+    <!-- TOOL 3: Standard to Slope Intercept -->
+    <div id="stdToSlopeTool" class="tool-panel">
+        <div class="input-group">
+            <label>Standard Form: Ax + By = C</label>
+            <div class="row">
+                <input type="number" id="stdA" placeholder="A">
+                <span>x + </span>
+                <input type="number" id="stdB" placeholder="B">
+                <span>y = </span>
+                <input type="number" id="stdC" placeholder="C">
+            </div>
+        </div>
+        <button onclick="calcStdToSlope()">Convert</button>
+        <div id="res-std" class="result-box"></div>
+    </div>
+
+    <!-- TOOL 4: System of Equations -->
+    <div id="systemTool" class="tool-panel">
+        <div class="input-group">
+            <label>Eq 1: <small style="font-weight:normal">a₁x + b₁y = c₁</small></label>
+            <div class="row">
+                <input type="number" id="sysA1" placeholder="a1">
+                <input type="number" id="sysB1" placeholder="b1">
+                <input type="number" id="sysC1" placeholder="c1">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Eq 2: <small style="font-weight:normal">a₂x + b₂y = c₂</small></label>
+            <div class="row">
+                <input type="number" id="sysA2" placeholder="a2">
+                <input type="number" id="sysB2" placeholder="b2">
+                <input type="number" id="sysC2" placeholder="c2">
+            </div>
+        </div>
+        <button onclick="calcSystem()">Solve System</button>
+        <div id="res-sys" class="result-box"></div>
+    </div>
+
+    <!-- TOOL 5: Multiply Polynomials -->
+    <div id="multiplyTool" class="tool-panel">
+        <div class="input-group">
+            <label>Polynomial 1: (ax² + bx + c)</label>
+            <div class="row">
+                <input type="number" id="mulA1" placeholder="a">
+                <span>x² + </span>
+                <input type="number" id="mulB1" placeholder="b">
+                <span>x + </span>
+                <input type="number" id="mulC1" placeholder="c">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Polynomial 2: (dx² + ex + f)</label>
+            <div class="row">
+                <input type="number" id="mulA2" placeholder="d">
+                <span>x² + </span>
+                <input type="number" id="mulB2" placeholder="e">
+                <span>x + </span>
+                <input type="number" id="mulC2" placeholder="f">
+            </div>
+        </div>
+        <button onclick="calcMultiply()">Multiply</button>
+        <div id="res-mul" class="result-box"></div>
+    </div>
+
+    <!-- TOOL 6: Factoring -->
+    <div id="factorTool" class="tool-panel">
+        <div class="input-group">
+            <label>Trinomial: ax² + bx + c</label>
+            <div class="row">
+                <input type="number" id="facA" placeholder="a" value="1">
+                <span>x² + </span>
+                <input type="number" id="facB" placeholder="b">
+                <span>x + </span>
+                <input type="number" id="facC" placeholder="c">
+            </div>
+        </div>
+        <button onclick="calcFactor()">Factor</button>
+        <div id="res-factor" class="result-box"></div>
+    </div>
+
+    <!-- TOOL 7: Quadratic Formula -->
+    <div id="quadTool" class="tool-panel">
+        <div class="input-group">
+            <label>Quadratic: ax² + bx + c = 0</label>
+            <div class="row">
+                <input type="number" id="qA" placeholder="a" value="1">
+                <span>x² + </span>
+                <input type="number" id="qB" placeholder="b">
+                <span>x + </span>
+                <input type="number" id="qC" placeholder="c">
+                <span>= 0</span>
+            </div>
+        </div>
+        <button onclick="calcQuadratic()">Solve for x</button>
+        <div id="res-quad" class="result-box"></div>
+    </div>
+
+    <!-- TOOL 8: Simplify Radicals -->
+    <div id="radicalTool" class="tool-panel">
+        <div class="input-group">
+            <label>Root Index (n): <small style="font-weight:normal; color:#666">(2 for Square Root, 3 for Cube Root)</small></label>
+            <input type="number" id="radIndex" value="2" placeholder="2" min="2" max="9">
+        </div>
+        <div class="input-group">
+            <label>Expression Parts: <small style="font-weight:normal">A &middot; <sup style="font-size:0.8em">n</sup>&radic;(B &middot; x<sup>p</sup> &middot; y<sup>q</sup>)</small></label>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                 <div style="flex:1">
+                    <span style="font-size:0.85rem; font-weight:bold; color:#4b5563">Outside (A)</span>
+                    <input type="number" id="radOut" placeholder="1">
+                 </div>
+                 <div style="font-size:1.5rem; font-family:'Times New Roman'; padding-top:15px">&radic;</div>
+                 <div style="flex:2">
+                    <span style="font-size:0.85rem; font-weight:bold; color:#4b5563">Inside Number (B)</span>
+                    <input type="number" id="radIn" placeholder="e.g. 72">
+                 </div>
+            </div>
+            <div class="row">
+                <div style="flex:1">
+                    <span style="font-size:0.85rem; color:#4b5563">x exponent (p)</span>
+                    <input type="number" id="radX" placeholder="0">
+                </div>
+                <div style="flex:1">
+                    <span style="font-size:0.85rem; color:#4b5563">y exponent (q)</span>
+                    <input type="number" id="radY" placeholder="0">
+                </div>
+            </div>
+        </div>
+        <button onclick="calcRadical()">Simplify Radical</button>
+        <div id="res-rad" class="result-box"></div>
+    </div>
+
+</div>
+
+<script>
+    // --- UTILITY: Fraction & Math Helpers ---
+    function gcd(a, b) {
+        return b === 0 ? a : gcd(b, a % b);
+    }
+
+    // Precision helper for float errors
+    function cleanFloat(num) {
+        return Math.round(num * 1000000) / 1000000;
+    }
+
+    function getFraction(numerator, denominator) {
+        if (denominator === 0) return "undefined";
+        if (numerator === 0) return "0";
+        
+        let sign = (numerator * denominator >= 0) ? 1 : -1;
+        numerator = Math.abs(numerator);
+        denominator = Math.abs(denominator);
+        
+        // Try to handle decimals passed as numerator
+        // If numerator is 0.5 and den is 1 -> 1/2
+        if (!Number.isInteger(numerator) || !Number.isInteger(denominator)) {
+            // Very basic decimal to fraction
+            numerator *= 10000;
+            denominator *= 10000;
+            numerator = Math.round(numerator);
+            denominator = Math.round(denominator);
+        }
+
+        const common = gcd(numerator, denominator);
+        numerator /= common;
+        denominator /= common;
+
+        if (denominator === 1) return (sign * numerator).toString();
+        return (sign === -1 ? "-" : "") + `${numerator}/${denominator}`;
+    }
+
+    function makeVisualFraction(num, den) {
+        if (den === 1) return num;
+        if (den === -1) return -num; 
+        if (den < 0) { num = -num; den = -den; }
+        return `<div class="fraction"><span class="frac-top">${num}</span><span class="frac-bottom">${den}</span></div>`;
+    }
+
+    function simplifyRadical(n) {
+        if (n === 0) return { k: 0, r: 0 };
+        let absN = Math.abs(n);
+        let k = 1;
+        for (let i = Math.floor(Math.sqrt(absN)); i > 1; i--) {
+            if (absN % (i * i) === 0) {
+                k = i;
+                absN = absN / (i * i);
+                break;
+            }
+        }
+        return { k: k, r: absN };
+    }
+
+    // --- UI SWITCHER ---
+    function switchTool() {
+        document.querySelectorAll('.tool-panel').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.result-box').forEach(el => el.style.display = 'none');
+        
+        const selectedId = document.getElementById('topicSelector').value;
+        document.getElementById(selectedId).classList.add('active');
+    }
+
+    // --- LOGIC 0: Equation Solver (NEW) ---
+    function parseVal(str) {
+        if (!str) return 0;
+        str = str.trim();
+        if (str.includes('/')) {
+            const parts = str.split('/');
+            return parseFloat(parts[0]) / parseFloat(parts[1]);
+        }
+        return parseFloat(str);
+    }
+
+    // Simplified parser that handles single variable 'x'
+    function parseSide(expr) {
+        // Remove spaces
+        expr = expr.replace(/\s+/g, '');
+        // Standardize subtraction to +-
+        // Be careful not to replace negative sign at start or after (
+        // Strategy: Parse linear scan, keeping track of parenthesis scope
+        
+        let terms = []; // { c: coeff, isX: boolean }
+        
+        // 1. Expand Parenthesis (Distribution)
+        // Look for number(expr) or -(expr) or +(expr)
+        // Simple regex loop for one level depth (Algebra I standard)
+        
+        // Regex to find: (start or operator)(number?)(parenthesis content)
+        // Note: JS regex is limited, doing this manually is safer for edge cases.
+        // Let's assume standard format like "2(3x+1)" or "-(x-2)" or "3/4(x+4)"
+        
+        while (expr.includes('(')) {
+            // Find last opening paren to handle innermost first (though typical is 1 level)
+            const openIdx = expr.lastIndexOf('(');
+            const closeIdx = expr.indexOf(')', openIdx);
+            
+            if (closeIdx === -1) return { error: "Unmatched parenthesis" };
+            
+            const inside = expr.substring(openIdx + 1, closeIdx);
+            
+            // Find multiplier before '('
+            // Backtrack from openIdx-1 to find number
+            let multiplierEnd = openIdx;
+            let multiplierStart = openIdx;
+            
+            // Scan back for number/fraction/sign
+            while (multiplierStart > 0) {
+                const char = expr[multiplierStart - 1];
+                if (/[0-9\.\/]/.test(char)) {
+                    multiplierStart--;
+                } else if (char === '+' || char === '-') {
+                    multiplierStart--;
+                    break; // sign is start of multiplier
+                } else {
+                    break;
+                }
+            }
+            
+            let multStr = expr.substring(multiplierStart, multiplierEnd);
+            let multiplier = 1;
+            
+            if (multStr === "" || multStr === "+") multiplier = 1;
+            else if (multStr === "-") multiplier = -1;
+            else multiplier = parseVal(multStr);
+            
+            // Distribute multiplier to 'inside'
+            // Need to parse 'inside' first to split terms
+            // Simple split by + or - (handle first char)
+            // Replace 'inside' with result
+            
+            // Quick recursive parse of inside linear expression
+            const insideParsed = parseLinearSimple(inside);
+            
+            // Distribute
+            const distX = insideParsed.x * multiplier;
+            const distC = insideParsed.c * multiplier;
+            
+            // Reconstruct string
+            let replacement = "";
+            if (distX !== 0) replacement += (distX > 0 ? "+" : "") + distX + "x";
+            if (distC !== 0) replacement += (distC > 0 ? "+" : "") + distC;
+            
+            // Replace "multStr(inside)" with replacement
+            const before = expr.substring(0, multiplierStart);
+            const after = expr.substring(closeIdx + 1);
+            expr = before + replacement + after;
+        }
+
+        // 2. Parse Expanded Expression
+        return parseLinearSimple(expr);
+    }
+
+    function parseLinearSimple(str) {
+        // Handles "3x+4-2x+1/2" format (no parens)
+        // Clean double operators ++, +-, --, -+
+        str = str.replace(/\+\+/g, '+').replace(/\+\-/g, '-').replace(/\-\+/g, '-').replace(/\-\-/g, '+');
+        if (str.startsWith('+')) str = str.substring(1);
+        
+        // Split into terms. Look for + or -
+        // Hack: Replace - with "+-" then split by +
+        // Need to protect first char if -
+        let temp = str;
+        if (temp.startsWith('-')) temp = "ZERO" + temp.substring(1); // placeholder
+        temp = temp.replace(/\-/g, '+-');
+        if (temp.startsWith("ZERO")) temp = "-" + temp.substring(4);
+        
+        const rawTerms = temp.split('+');
+        
+        let totalX = 0;
+        let totalC = 0;
+        
+        rawTerms.forEach(t => {
+            if (!t) return;
+            if (t.includes('x')) {
+                // Remove x, parse coeff
+                let coeffStr = t.replace('x', '');
+                if (coeffStr === "" || coeffStr === "+") totalX += 1;
+                else if (coeffStr === "-") totalX -= 1;
+                else totalX += parseVal(coeffStr);
+            } else {
+                totalC += parseVal(t);
+            }
+        });
+        
+        return { x: totalX, c: totalC };
+    }
+
+    function calcSolve() {
+        const input = document.getElementById('eqInput').value;
+        const resBox = document.getElementById('res-solve');
+        
+        if (!input.includes('=')) {
+            alert("Equation must contain '='.");
+            return;
+        }
+
+        resBox.style.display = 'block';
+        
+        const sides = input.split('=');
+        if (sides.length !== 2) {
+             alert("Equation has too many equals signs.");
+             return;
+        }
+
+        const left = parseSide(sides[0]);
+        const right = parseSide(sides[1]);
+        
+        if (left.error || right.error) {
+            resBox.innerText = "Error parsing equation.";
+            return;
+        }
+
+        // Logic: Lx + Lc = Rx + Rc
+        // (L - R)x = (Rc - Lc)
+        
+        const m = cleanFloat(left.x - right.x);
+        const b = cleanFloat(right.c - left.c);
+        
+        // Display Simplified Step
+        // Construct display string for simplified form
+        // Ax + B = Cx + D
+        const dispSide = (obj) => {
+            let s = "";
+            let xVal = cleanFloat(obj.x);
+            let cVal = cleanFloat(obj.c);
+            
+            if (xVal !== 0) s += (xVal === 1 ? "x" : xVal === -1 ? "-x" : getFraction(xVal, 1) + "x");
+            
+            if (cVal !== 0) {
+                let frac = getFraction(Math.abs(cVal), 1);
+                if (s === "") s += (cVal < 0 ? "-" : "") + frac;
+                else s += (cVal < 0 ? " - " : " + ") + frac;
+            }
+            if (s === "") s = "0";
+            return s;
+        };
+
+        const simplifiedStr = `${dispSide(left)} = ${dispSide(right)}`;
+        
+        let solutionStr = "";
+        
+        if (m === 0) {
+            if (b === 0) {
+                solutionStr = "Infinite Solutions (Identity)";
+            } else {
+                solutionStr = "No Solution";
+            }
+        } else {
+            const finalVal = b / m;
+            const fracVal = getFraction(b, m); // uses floats, getFraction handles cleaning
+            solutionStr = `x = ${fracVal}`;
+        }
+
+        resBox.innerHTML = `
+            <div class="math-note">Simplified Form</div>
+            <div class="math-display" style="font-size:1.2rem; margin-bottom:15px;">${simplifiedStr}</div>
+            <div class="math-note">Solution</div>
+            <div class="math-display">${solutionStr}</div>
+        `;
+    }
+
+    // --- LOGIC 1: Two Points ---
+    function calcTwoPoints() {
+        const x1 = parseFloat(document.getElementById('x1').value);
+        const y1 = parseFloat(document.getElementById('y1').value);
+        const x2 = parseFloat(document.getElementById('x2').value);
+        const y2 = parseFloat(document.getElementById('y2').value);
+        const resBox = document.getElementById('res-slope');
+
+        if ([x1, y1, x2, y2].some(isNaN)) {
+            alert("Please enter all coordinates.");
+            return;
+        }
+        resBox.style.display = 'block';
+
+        if (x1 === x2) {
+            resBox.innerHTML = `<div class="math-note">Vertical Line</div><div class="math-display">x = ${x1}</div>`;
+            return;
+        }
+
+        const dy = y2 - y1;
+        const dx = x2 - x1;
+        const m = dy / dx;
+        const b = y1 - (m * x1);
+        const mFrac = getFraction(dy, dx);
+        
+        let eq = "y = ";
+        if (m === 0) eq = `y = ${b}`;
+        else {
+            eq += (mFrac === "1" ? "" : mFrac === "-1" ? "-" : mFrac) + "x";
+            if (b > 0) eq += ` + ${b}`;
+            else if (b < 0) eq += ` - ${Math.abs(b)}`;
+        }
+
+        resBox.innerHTML = `<div class="math-note">Slope: ${mFrac}</div><div class="math-display">${eq}</div>`;
+    }
+
+    // --- LOGIC 2: Point & Slope ---
+    function calcPointSlope() {
+        const x = parseFloat(document.getElementById('psX').value);
+        const y = parseFloat(document.getElementById('psY').value);
+        const mStr = document.getElementById('psM').value.trim();
+        const resBox = document.getElementById('res-ps');
+
+        if (isNaN(x) || isNaN(y) || mStr === "") {
+            alert("Please enter Point and Slope.");
+            return;
+        }
+        resBox.style.display = 'block';
+
+        let mNum, mDen;
+        if (mStr.includes('/')) {
+            const parts = mStr.split('/');
+            mNum = parseFloat(parts[0]);
+            mDen = parseFloat(parts[1]);
+        } else {
+            mNum = parseFloat(mStr);
+            mDen = 1;
+        }
+
+        if (isNaN(mNum) || isNaN(mDen) || mDen === 0) {
+            alert("Invalid slope format.");
+            return;
+        }
+
+        const bNum = (y * mDen) - (mNum * x);
+        const bDen = mDen;
+        const mDisplay = getFraction(mNum, mDen);
+        
+        let psEq = "y";
+        if (y > 0) psEq += ` - ${y}`;
+        else if (y < 0) psEq += ` + ${Math.abs(y)}`;
+        
+        psEq += ` = ${mDisplay}`;
+        
+        if (x > 0) psEq += `(x - ${x})`;
+        else if (x < 0) psEq += `(x + ${Math.abs(x)})`;
+        else psEq += `(x)`;
+
+        let siEq = "y = ";
+        if (mNum === 0) {
+            siEq = `y = ${y}`; 
+        } else {
+            siEq += (mDisplay === "1" ? "" : mDisplay === "-1" ? "-" : mDisplay) + "x";
+            const bVal = bNum / bDen;
+            if (bNum !== 0) {
+                const bFracStr = getFraction(Math.abs(bNum), Math.abs(bDen));
+                if (bVal > 0) siEq += ` + ${bFracStr}`;
+                else siEq += ` - ${bFracStr}`;
+            }
+        }
+
+        resBox.innerHTML = `
+            <div class="math-note">Point-Slope Form</div>
+            <div class="math-display" style="font-size: 1.4rem; margin-bottom: 15px;">${psEq}</div>
+            <div class="math-note">Slope-Intercept Form</div>
+            <div class="math-display">${siEq}</div>
+        `;
+    }
+
+    // --- LOGIC 3: Standard to Slope-Intercept ---
+    function calcStdToSlope() {
+        const A = parseFloat(document.getElementById('stdA').value);
+        const B = parseFloat(document.getElementById('stdB').value);
+        const C = parseFloat(document.getElementById('stdC').value);
+        const resBox = document.getElementById('res-std');
+
+        if ([A, B, C].some(isNaN)) {
+            alert("Please enter A, B, and C.");
+            return;
+        }
+        
+        if (B === 0) {
+            resBox.style.display = 'block';
+            resBox.innerHTML = `<div class="math-display">x = ${getFraction(C, A)}</div>`;
+            return;
+        }
+
+        const mFrac = getFraction(-A, B);
+        const bVal = C / B;
+        const bNum = C; const bDen = B;
+
+        let eq = "y = ";
+        if (mFrac === "0") {
+            eq = `y = ${getFraction(bNum, bDen)}`;
+        } else {
+            eq += (mFrac === "1" ? "" : mFrac === "-1" ? "-" : mFrac) + "x";
+            if (bVal > 0) eq += ` + ${getFraction(bNum, bDen)}`;
+            else if (bVal < 0) eq += ` - ${getFraction(Math.abs(bNum), Math.abs(bDen))}`;
+        }
+
+        resBox.style.display = 'block';
+        resBox.innerHTML = `<div class="math-display">${eq}</div>`;
+    }
+
+    // --- LOGIC 4: Systems of Equations ---
+    function calcSystem() {
+        const a1 = parseFloat(document.getElementById('sysA1').value);
+        const b1 = parseFloat(document.getElementById('sysB1').value);
+        const c1 = parseFloat(document.getElementById('sysC1').value);
+        
+        const a2 = parseFloat(document.getElementById('sysA2').value);
+        const b2 = parseFloat(document.getElementById('sysB2').value);
+        const c2 = parseFloat(document.getElementById('sysC2').value);
+        
+        const resBox = document.getElementById('res-sys');
+
+        if ([a1, b1, c1, a2, b2, c2].some(isNaN)) {
+            alert("Please enter all coefficients for both equations.");
+            return;
+        }
+        resBox.style.display = 'block';
+
+        const det = (a1 * b2) - (a2 * b1);
+
+        if (det === 0) {
+            const detX = (c1 * b2) - (c2 * b1); 
+            if (detX === 0) {
+                resBox.innerHTML = `<div class="math-note">Infinite Solutions</div><div class="math-display">Same Line</div>`;
+            } else {
+                resBox.innerHTML = `<div class="math-note">No Solution</div><div class="math-display">Parallel Lines</div>`;
+            }
+            return;
+        }
+
+        const detX = (c1 * b2) - (c2 * b1);
+        const detY = (a1 * c2) - (a2 * c1);
+
+        const xVal = getFraction(detX, det);
+        const yVal = getFraction(detY, det);
+
+        resBox.innerHTML = `
+            <div class="math-note">Solution Point</div>
+            <div class="math-display">(${xVal}, ${yVal})</div>
+        `;
+    }
+
+    // --- LOGIC 5: Multiply Polynomials ---
+    function calcMultiply() {
+        const getVal = (id) => {
+            const val = document.getElementById(id).value;
+            return val === "" ? 0 : parseFloat(val);
+        };
+
+        const a1 = getVal('mulA1');
+        const b1 = getVal('mulB1');
+        const c1 = getVal('mulC1');
+        
+        const a2 = getVal('mulA2');
+        const b2 = getVal('mulB2');
+        const c2 = getVal('mulC2');
+
+        const resBox = document.getElementById('res-mul');
+        resBox.style.display = 'block';
+
+        const term4 = a1 * a2;
+        const term3 = (a1 * b2) + (b1 * a2);
+        const term2 = (a1 * c2) + (b1 * b2) + (c1 * a2);
+        const term1 = (b1 * c2) + (c1 * b2);
+        const term0 = c1 * c2;
+
+        const terms = [
+            { pow: 4, val: term4 },
+            { pow: 3, val: term3 },
+            { pow: 2, val: term2 },
+            { pow: 1, val: term1 },
+            { pow: 0, val: term0 }
+        ];
+
+        let eq = "";
+        let isFirst = true;
+
+        terms.forEach(term => {
+            if (term.val === 0) return;
+
+            let sign = "";
+            if (term.val > 0) {
+                sign = isFirst ? "" : " + ";
+            } else {
+                sign = isFirst ? "-" : " - ";
+            }
+
+            let absVal = Math.abs(term.val);
+            let valStr = absVal.toString();
+            
+            if (absVal === 1 && term.pow !== 0) {
+                valStr = "";
+            }
+
+            let varStr = "";
+            if (term.pow === 0) varStr = "";
+            else if (term.pow === 1) varStr = "x";
+            else varStr = `x<sup>${term.pow}</sup>`;
+
+            eq += sign + valStr + varStr;
+            isFirst = false;
+        });
+
+        if (eq === "") eq = "0";
+
+        resBox.innerHTML = `<div class="math-display">${eq}</div>`;
+    }
+
+    // --- LOGIC 6: Factoring ---
+    function calcFactor() {
+        const a = parseFloat(document.getElementById('facA').value);
+        const b = parseFloat(document.getElementById('facB').value);
+        const c = parseFloat(document.getElementById('facC').value);
+        const resBox = document.getElementById('res-factor');
+
+        if ([a, b, c].some(isNaN)) {
+            alert("Please enter coefficients.");
+            return;
+        }
+        resBox.style.display = 'block';
+
+        const target = a * c;
+        let p = 0, q = 0;
+        let found = false;
+        const limit = Math.abs(target);
+
+        if (target === 0 && c === 0) {
+             resBox.innerHTML = `<div class="math-display">x(${a}x ${b>=0?'+':''}${b})</div>`;
+             return;
+        }
+
+        for (let i = -limit; i <= limit; i++) {
+            if (i === 0) continue; 
+            if (target % i === 0) {
+                let j = target / i;
+                if (i + j === b) {
+                    p = i; q = j; found = true; break;
+                }
+            }
+        }
+
+        if (!found) {
+            resBox.innerHTML = `<div class="math-display">Prime / Not Factorable</div>`;
+            return;
+        }
+
+        if (a === 1) {
+            const part1 = (p >= 0) ? `(x + ${p})` : `(x - ${Math.abs(p)})`;
+            const part2 = (q >= 0) ? `(x + ${q})` : `(x - ${Math.abs(q)})`;
+            resBox.innerHTML = `<div class="math-display">${part1}${part2}</div>`;
+        } else {
+            resBox.innerHTML = `
+                <div class="math-note">Split the middle term: ${p}x and ${q}x</div>
+                <div class="math-display">${a}x² ${p>=0?'+':''}${p}x ${q>=0?'+':''}${q}x ${c>=0?'+':''}${c}</div>
+            `;
+        }
+    }
+
+    // --- LOGIC 7: Quadratic Formula ---
+    function calcQuadratic() {
+        const a = parseFloat(document.getElementById('qA').value);
+        const b = parseFloat(document.getElementById('qB').value);
+        const c = parseFloat(document.getElementById('qC').value);
+        const resBox = document.getElementById('res-quad');
+
+        if ([a, b, c].some(isNaN)) {
+            alert("Please enter coefficients a, b, and c.");
+            return;
+        }
+        
+        if (a === 0) {
+            alert("If a = 0, this is a linear equation, not quadratic.");
+            return;
+        }
+
+        resBox.style.display = 'block';
+
+        const disc = (b * b) - (4 * a * c);
+        const isImaginary = disc < 0;
+        
+        // Simplify Radical
+        const simplified = simplifyRadical(Math.abs(disc));
+        const k = simplified.k;
+        const r = simplified.r;
+
+        let term1 = -b;
+        let term2Coeff = k;
+        let denom = 2 * a;
+        
+        if (denom < 0) {
+            term1 = -term1;
+            denom = -denom;
+        }
+
+        const commonDivisor = gcd(Math.abs(term1), gcd(term2Coeff, denom));
+        term1 /= commonDivisor;
+        term2Coeff /= commonDivisor;
+        denom /= commonDivisor;
+
+        let resultHTML = "";
+
+        if (r === 0) {
+            const frac = makeVisualFraction(term1, denom);
+            resultHTML = `x = ${frac}`;
+        } else if (r === 1 && !isImaginary) {
+            const root1Num = -b + Math.sqrt(disc);
+            const root1Den = 2 * a;
+            const root2Num = -b - Math.sqrt(disc);
+            const root2Den = 2 * a;
+            
+            const getVis = (n, d) => {
+                const com = gcd(Math.abs(n), Math.abs(d));
+                return makeVisualFraction(n/com, d/com);
+            };
+
+            const r1 = getVis(root1Num, root1Den);
+            const r2 = getVis(root2Num, root2Den);
+            resultHTML = `x = ${r1}, &nbsp; ${r2}`;
+        } 
+        else {
+            let numeratorStr = "";
+            if (term1 !== 0) numeratorStr += `${term1}`;
+            
+            const pm = (term1 !== 0) ? " ± " : "± ";
+            
+            let radicalStr = "";
+            let showCoeff = (term2Coeff !== 1);
+            if (showCoeff) radicalStr += term2Coeff;
+            if (isImaginary) radicalStr += "i";
+            
+            if (r > 1) {
+                radicalStr += `√${r}`;
+            } 
+            numeratorStr += pm + radicalStr;
+            resultHTML = `x = ${makeVisualFraction(numeratorStr, denom)}`;
+        }
+
+        const type = disc > 0 ? "Two Real Solutions" : (disc === 0 ? "One Real Solution" : "Two Complex Solutions");
+
+        resBox.innerHTML = `
+            <div class="math-note">Discriminant: ${disc}</div>
+            <div class="math-note">${type}</div>
+            <div class="math-display" style="font-size: 1.4rem;">${resultHTML}</div>
+        `;
+    }
+
+    // --- LOGIC 8: Radical Simplifier ---
+    function calcRadical() {
+        const index = parseInt(document.getElementById('radIndex').value) || 2;
+        const inVal = document.getElementById('radOut').value;
+        const outCoeff = (inVal === "" || inVal === null) ? 1 : parseFloat(inVal);
+        const inNum = parseFloat(document.getElementById('radIn').value);
+        const p = parseInt(document.getElementById('radX').value) || 0;
+        const q = parseInt(document.getElementById('radY').value) || 0;
+        const resBox = document.getElementById('res-rad');
+
+        if (isNaN(inNum)) {
+             alert("Please enter a number for the radicand.");
+             return;
+        }
+
+        resBox.style.display = 'block';
+        
+        // Handle 0
+        if (inNum === 0) {
+            resBox.innerHTML = `<div class="math-display">0</div>`;
+            return;
+        }
+
+        let outsideNum = outCoeff;
+        let insideNum = inNum;
+
+        // Simplify Negative Numbers
+        if (insideNum < 0) {
+             if (index % 2 === 0) {
+                resBox.innerHTML = `<div class="math-display">Not Real (Complex)</div>`;
+                return;
+             } else {
+                insideNum = Math.abs(insideNum);
+                outsideNum *= -1; // Pull negative out
+             }
+        }
+
+        let maxRoot = Math.floor(Math.pow(insideNum, 1/index));
+        for (let k = maxRoot; k >= 2; k--) {
+             let pow = Math.pow(k, index);
+             if (insideNum % pow === 0) {
+                 outsideNum *= k;
+                 insideNum /= pow;
+                 break; 
+             }
+        }
+
+        let xOut = Math.floor(p / index);
+        let xIn = p % index;
+        
+        let yOut = Math.floor(q / index);
+        let yIn = q % index;
+
+        let strOut = "";
+        
+        if (outsideNum === 1) {
+            // hidden unless nothing else outside
+        } else if (outsideNum === -1) {
+            strOut += "-";
+        } else {
+            strOut += outsideNum;
+        }
+
+        if (xOut === 1) strOut += "x";
+        else if (xOut > 1) strOut += `x<sup>${xOut}</sup>`;
+        
+        if (yOut === 1) strOut += "y";
+        else if (yOut > 1) strOut += `y<sup>${yOut}</sup>`;
+
+        let strIn = "";
+        if (insideNum !== 1) strIn += insideNum;
+        
+        if (xIn === 1) strIn += "x";
+        else if (xIn > 1) strIn += `x<sup>${xIn}</sup>`;
+        
+        if (yIn === 1) strIn += "y";
+        else if (yIn > 1) strIn += `y<sup>${yIn}</sup>`;
+
+        let finalHTML = "";
+        
+        if (strIn === "") {
+            if (strOut === "" || strOut === "-") strOut += "1";
+            finalHTML = strOut;
+        } else {
+            if (strOut === "-") strOut = "-"; 
+            
+            let rootSymbol = "&radic;";
+            if (index > 2) rootSymbol = `<sup>${index}</sup>&radic;`;
+            
+            finalHTML = `${strOut}${rootSymbol}<span style="text-decoration:overline; margin-left:2px;">${strIn}</span>`;
+        }
+        
+        resBox.innerHTML = `<div class="math-display">${finalHTML}</div>`;
+    }
+</script>
+
+</body>
+</html>
