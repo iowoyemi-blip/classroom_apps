@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Terminology Match</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-cyan: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none; /* Prevent text selection during rapid clicking */
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+            padding-bottom: 15px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-cyan);
+            font-size: 24px;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stat-box span {
+            color: var(--accent-green);
+        }
+
+        /* GAME AREA */
+        #game-board {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px; /* Space between columns */
+            width: 100%;
+            max-width: 1200px;
+            flex-grow: 1;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .column-header {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* CARDS */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-height: 80px;
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        .card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+            transform: translateX(2px);
+        }
+
+        .card.term {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            justify-content: flex-end; /* Align terms to right */
+            text-align: right;
+            border-right: 4px solid transparent;
+        }
+        
+        .card.def {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 16px;
+            border-left: 4px solid transparent;
+        }
+
+        /* STATES */
+        .card.selected {
+            background-color: rgba(56, 189, 248, 0.1);
+            border-color: var(--accent-cyan);
+        }
+        .card.term.selected {
+            border-right-color: var(--accent-cyan);
+        }
+        .card.def.selected {
+            border-left-color: var(--accent-cyan);
+        }
+
+        .card.matched {
+            background-color: rgba(74, 222, 128, 0.1);
+            border-color: var(--accent-green);
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: default;
+        }
+        
+        .card.wrong {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: var(--accent-red);
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* CONNECTION LINE (Visual Guide) */
+        .connector-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--text-secondary);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: background-color 0.2s;
+        }
+        
+        .term .connector-dot { right: -30px; }
+        .def .connector-dot { left: -30px; }
+
+        .selected .connector-dot { background-color: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); }
+        .matched .connector-dot { background-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 2px solid var(--accent-cyan);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.2);
+        }
+
+        .btn {
+            background: var(--accent-cyan);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            background: #7dd3fc;
+        }
+
+        /* ANIMATIONS */
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            #game-board {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .term .connector-dot, .def .connector-dot {
+                display: none; /* Hide dots on mobile */
+            }
+            .card.term {
+                text-align: center;
+                justify-content: center;
+                border-right: 1px solid rgba(56, 189, 248, 0.2);
+                background-color: #162030; /* Slightly darker to distinguish */
+            }
+            .card.def {
+                text-align: center;
+                justify-content: center;
+                font-size: 14px;
+                padding: 15px;
+            }
+            .column-header { display: none; }
+            
+            /* On mobile, we might want to stack: Selected Term stays fixed at top? 
+               For simplicity, we just stack them in one big list or keep columns but smaller text.
+               Better approach for mobile matching: Tap Term, then scroll to tap Def.
+            */
+            h1 { font-size: 18px; }
+            .stats { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-brain"></i> Neural Link</h1>
+        <div class="stats">
+            <div class="stat-box">Round: <span id="round-display">1/5</span></div>
+            <div class="stat-box">Matches: <span id="match-display">0</span></div>
+        </div>
+    </header>
+
+    <div id="game-board">
+        <div class="column" id="terms-col">
+            <div class="column-header">Data Inputs</div>
+            <!-- Terms injected here -->
+        </div>
+        <div class="column" id="defs-col">
+            <div class="column-header">Data Outputs</div>
+            <!-- Definitions injected here -->
+        </div>
+    </div>
+
+    <!-- START MODAL -->
+    <div id="start-modal" class="modal-overlay active">
+        <div class="modal-content">
+            <h2 style="font-family: 'Orbitron'; color: var(--accent-cyan);">System Ready</h2>
+            <p>Connect the AI Terminology with the correct definition.</p>
+            <p>Complete 5 rounds to finish the training model.</p>
+            <button class="btn" onclick="startGame()">Initialize</button>
+        </div>
+    </div>
+
+    <!-- ROUND COMPLETE MODAL -->
+    <div id="round-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="font-family: 'Orbitron'; color: var(--accent-green);">Batch Processed</h2>
+            <p>Data accepted. Loading next batch...</p>
+            <button class="btn" onclick="nextRound()">Next Batch</button>
+        </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div id="end-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="font-family: 'Orbitron'; color: var(--accent-cyan);">Training Complete</h2>
+            <p>You have successfully processed all data nodes.</p>
+            <p>Final Score: <span id="final-score" style="color:var(--accent-green)"></span></p>
+            <button class="btn" onclick="location.reload()">Re-Train</button>
+        </div>
+    </div>
+
+    <script>
+        // DATA FROM FLASHCARDS
+        const allData = [
+            { term: "Discriminative AI", def: "The 'Analyst.' AI designed to classify existing data, like identifying spam or cats." },
+            { term: "Generative AI", def: "The 'Creator.' AI designed to generate NEW data (images, text) that didn't exist before." },
+            { term: "Machine Learning", def: "Systems that learn patterns from data without explicit rules for every scenario." },
+            { term: "Deep Learning", def: "A subset of ML using complex neural networks inspired by the human brain." },
+            { term: "Transformer", def: "The 'T' in GPT. Architecture that processes the full context of a sentence at once." },
+            { term: "2017 Milestone", def: "Publication of 'Attention Is All You Need' paper, introducing Transformers." },
+            { term: "Large Language Model", def: "Probabilistic engine trained on text to predict the next likely word (token)." },
+            { term: "Hallucination", def: "When AI confidently generates incorrect info because it prioritizes patterns over facts." },
+            { term: "AI Bias", def: "Prejudices in AI output caused by the human prejudices in the training data." },
+            { term: "Multimodal AI", def: "Systems that understand/generate multiple media types (text, image, audio) at once." },
+            { term: "Sandwich Method", def: "Workflow: Human Prompts -> AI Generates -> Human Curates." },
+            { term: "Deep Blue", def: "Chess computer (1997) that used Brute Force logic, not Generative AI." },
+            { term: "Turing Test", def: "1950 test to see if a machine can exhibit intelligent behavior indistinguishable from a human." },
+            { term: "ChatGPT Launch", def: "2022 event that brought Generative AI technology to the general public." },
+            { term: "Stochastic Parrot", def: "Metaphor for LLMs repeating patterns without understanding meaning." },
+            { term: "Curator", def: "The human's role to edit, fact-check, and select the AI's output." },
+            { term: "Prediction Engine", def: "More accurate term for LLM than 'Search Engine'; it calculates probability." },
+            { term: "Token", def: "The basic unit of text (part of a word) that an LLM processes." },
+            { term: "Attention Mechanism", def: "Feature allowing AI to track relationships between distant words." },
+            { term: "Co-creation", def: "Using AI as a partner/engine for creative work, not just a tool." },
+            { term: "AI Agents", def: "Future AI that performs autonomous actions (like booking flights)." },
+            { term: "IP Concerns", def: "Debates regarding ownership of AI content and training data rights." },
+            { term: "Artist vs Critic", def: "Analogy: Generative is the Artist; Discriminative is the Critic." },
+            { term: "Human Pilot", def: "Necessary because AI lacks intent, moral judgment, and taste." },
+            { term: "Autocomplete on Steroids", def: "Analogy for how LLMs predict text one word at a time." }
+        ];
+
+        // GAME STATE
+        let remainingData = [];
+        let currentBatch = [];
+        let selectedTerm = null;
+        let selectedDef = null;
+        let round = 0;
+        let matchesInRound = 0;
+        let totalMatches = 0;
+        const BATCH_SIZE = 5;
+
+        // ELEMENTS
+        const termsCol = document.getElementById('terms-col');
+        const defsCol = document.getElementById('defs-col');
+        const roundDisplay = document.getElementById('round-display');
+        const matchDisplay = document.getElementById('match-display');
+
+        // UTILS
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            document.getElementById('start-modal').classList.remove('active');
+            // Clone and shuffle full dataset
+            remainingData = shuffle([...allData]);
+            round = 0;
+            totalMatches = 0;
+            loadRound();
+        }
+
+        function loadRound() {
+            round++;
+            matchesInRound = 0;
+            
+            // Calculate progress
+            const totalRounds = Math.ceil(allData.length / BATCH_SIZE);
+            roundDisplay.innerText = `${round}/${totalRounds}`;
+            matchDisplay.innerText = totalMatches;
+
+            // Get next batch
+            currentBatch = remainingData.slice(0, BATCH_SIZE);
+            remainingData = remainingData.slice(BATCH_SIZE);
+
+            if (currentBatch.length === 0) {
+                endGame();
+                return;
+            }
+
+            renderBoard();
+        }
+
+        function renderBoard() {
+            termsCol.innerHTML = '<div class="column-header">Data Inputs</div>';
+            defsCol.innerHTML = '<div class="column-header">Data Outputs</div>';
+
+            // Create Term Cards
+            const terms = shuffle([...currentBatch]);
+            terms.forEach(item => {
+                const btn = document.createElement('div');
+                btn.className = 'card term';
+                btn.innerText = item.term;
+                btn.dataset.id = item.term; // ID is the term itself
+                btn.innerHTML += '<div class="connector-dot"></div>';
+                btn.onclick = () => handleTermClick(btn);
+                termsCol.appendChild(btn);
+            });
+
+            // Create Def Cards
+            const defs = shuffle([...currentBatch]);
+            defs.forEach(item => {
+                const btn = document.createElement('div');
+                btn.className = 'card def';
+                btn.innerText = item.def;
+                btn.dataset.match = item.term; // Match ID is the term
+                btn.innerHTML += '<div class="connector-dot"></div>';
+                btn.onclick = () => handleDefClick(btn);
+                defsCol.appendChild(btn);
+            });
+        }
+
+        function handleTermClick(elem) {
+            if (elem.classList.contains('matched')) return;
+            
+            // Deselect previous term
+            if (selectedTerm) selectedTerm.classList.remove('selected');
+            
+            // If clicking same, just toggle off
+            if (selectedTerm === elem) {
+                selectedTerm = null;
+                return;
+            }
+
+            selectedTerm = elem;
+            elem.classList.add('selected');
+            checkMatch();
+        }
+
+        function handleDefClick(elem) {
+            if (elem.classList.contains('matched')) return;
+
+            // Deselect previous def
+            if (selectedDef) selectedDef.classList.remove('selected');
+
+            // If clicking same, toggle off
+            if (selectedDef === elem) {
+                selectedDef = null;
+                return;
+            }
+
+            selectedDef = elem;
+            elem.classList.add('selected');
+            checkMatch();
+        }
+
+        function checkMatch() {
+            if (selectedTerm && selectedDef) {
+                const termId = selectedTerm.dataset.id;
+                const defMatchId = selectedDef.dataset.match;
+
+                if (termId === defMatchId) {
+                    // MATCH!
+                    handleSuccess();
+                } else {
+                    // FAIL!
+                    handleFail();
+                }
+            }
+        }
+
+        function handleSuccess() {
+            selectedTerm.classList.remove('selected');
+            selectedDef.classList.remove('selected');
+            
+            selectedTerm.classList.add('matched');
+            selectedDef.classList.add('matched');
+
+            // Reset selection
+            selectedTerm = null;
+            selectedDef = null;
+
+            matchesInRound++;
+            totalMatches++;
+            matchDisplay.innerText = totalMatches;
+
+            // Check if round complete
+            if (matchesInRound === currentBatch.length) {
+                setTimeout(() => {
+                    if (remainingData.length > 0) {
+                        document.getElementById('round-modal').classList.add('active');
+                    } else {
+                        endGame();
+                    }
+                }, 500);
+            }
+        }
+
+        function handleFail() {
+            const t = selectedTerm;
+            const d = selectedDef;
+
+            t.classList.add('wrong');
+            d.classList.add('wrong');
+
+            setTimeout(() => {
+                t.classList.remove('wrong', 'selected');
+                d.classList.remove('wrong', 'selected');
+            }, 500);
+
+            selectedTerm = null;
+            selectedDef = null;
+        }
+
+        function nextRound() {
+            document.getElementById('round-modal').classList.remove('active');
+            loadRound();
+        }
+
+        function endGame() {
+            document.getElementById('end-modal').classList.add('active');
+            document.getElementById('final-score').innerText = totalMatches + " / " + allData.length;
+        }
+
+    </script>
+</body>
+</html>
