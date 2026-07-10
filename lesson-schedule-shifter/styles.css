@@ -59,7 +59,9 @@ td input, td select { min-width: 100px; padding: .5rem; }
 .block-title { min-width: 195px; font-weight: 670; }
 .block-color { width: 2.5rem; min-width: 2.5rem; height: 2.1rem; padding: .12rem; cursor: pointer; }
 .block-days { max-width: 90px; }
+.block-days:disabled { cursor: not-allowed; color: #687686; background: #edf1f4; }
 .date-range { min-width: 180px; color: #344d60; font-size: .86rem; font-weight: 650; }
+.fixed-chip { display: inline-block; margin-left: .45rem; padding: .16rem .38rem; border: 1px solid #86a9bd; border-radius: 1rem; color: #174f6d; background: #e4f2f8; font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
 .row-actions { white-space: nowrap; }
 .row-button { width: 2rem; height: 2rem; margin-left: .25rem; color: #245572; background: #eaf3f8; font-size: 1.1rem; }
 .row-button.delete { color: var(--red); background: #fceeee; }

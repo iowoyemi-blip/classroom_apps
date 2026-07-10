@@ -17,6 +17,12 @@ const SAMPLE_COLORS = [
   "#ffffff", "#d9f1d0", "#f8dccd", "#c2e3f3", "#ffffff", "#ffffff", "#f6c9b4", "#fff500", "#1c9cd0", "#bdebc9", "#f8dfd2", "#d3e0f0", "#ffffff", "#ffffff", "#f7b465", "#fee69f", "#8bd1ec", "#ffffff", "#f7c7af", "#d7f0d0", "#c4e2f0", "#f9ddd0", "#c4f0c9", "#c3e8f6", "#e9c6e9", "#00f500", "#d8f0d1", "#d7e4f2", "#ffffff", "#ffffff", "#f8c4a9", "#c2efcc", "#edc8ec", "#ffffff", "#ffffff", "#16a9de", "#fedc69", "#ffffff", "#ffffff", "#4bd254", "#63bce0", "#12e3e1", "#c8efc9", "#c5e5f4"
 ];
 const COLOR_CYCLE = ["#d9f1d0", "#f8dccd", "#c2e3f3", "#fff500", "#1c9cd0", "#e9c6e9", "#f7b465", "#c4f0c9"];
+const FIXED_WINDOWS = {
+  "sample-19": { fixedStart: "2026-12-09", fixedEnd: "2026-12-11" },
+  "sample-20": { fixedStart: "2026-12-14", fixedEnd: "2026-12-18" },
+  "sample-42": { fixedStart: "2027-05-12", fixedEnd: "2027-05-14" },
+  "sample-43": { fixedStart: "2027-05-17", fixedEnd: "2027-05-21" }
+};
 
 const SAMPLE_BLOCKS = [
   ["First Day of Class Activities", "Activity", 1], ["1.1 Rules of Exponents", "Lesson", 6],
@@ -40,9 +46,9 @@ const SAMPLE_BLOCKS = [
   ["Unit 7 Review", "Review", 1], ["Unit 7 Test", "Test", 1],
   ["8.1 Linear, Quadratic, and Exponential Patterns", "Lesson", 4], ["8.2 Exponential Growth and Decay", "Lesson", 5],
   ["Multi-layer Problem Solving", "Activity", 2], ["Finals Review", "Review", 3], ["Final Exams", "Test", 5]
-].map(([title, type, days], index) => ({ id: `sample-${index}`, title, type, days, color: SAMPLE_COLORS[index] }));
+].map(([title, type, days], index) => ({ id: `sample-${index}`, title, type, days, color: SAMPLE_COLORS[index], ...FIXED_WINDOWS[`sample-${index}`] }));
 
-let state = normalizeBlockColors(loadState());
+let state = normalizePlan(loadState());
 let currentMonth = startOfMonth(parseIsoDate(state.termStart));
 
 const elements = {
@@ -57,13 +63,21 @@ function defaultState() {
 }
 
 function isHexColor(value) { return /^#[0-9a-f]{6}$/i.test(value); }
+function isIsoDate(value) { return /^\d{4}-\d{2}-\d{2}$/.test(value); }
+function isFixedBlock(block) { return isIsoDate(block.fixedStart) && isIsoDate(block.fixedEnd) && block.fixedStart <= block.fixedEnd; }
 
-function normalizeBlockColors(plan) {
+/* Existing browser-saved plans are upgraded automatically so the four school-wide windows are protected too. */
+function normalizePlan(plan) {
   return {
     ...plan,
     blocks: plan.blocks.map((block, index) => {
       const matchingSample = SAMPLE_BLOCKS.find(sample => sample.id === block.id);
-      return { ...block, color: isHexColor(block.color) ? block.color : matchingSample?.color ?? COLOR_CYCLE[index % COLOR_CYCLE.length] };
+      return {
+        ...block,
+        color: isHexColor(block.color) ? block.color : matchingSample?.color ?? COLOR_CYCLE[index % COLOR_CYCLE.length],
+        fixedStart: isIsoDate(block.fixedStart) ? block.fixedStart : matchingSample?.fixedStart,
+        fixedEnd: isIsoDate(block.fixedEnd) ? block.fixedEnd : matchingSample?.fixedEnd
+      };
     })
   };
 }
@@ -94,31 +108,64 @@ function isInstructionalDay(date, noClassSet = getNoClassSet()) {
   return date.getDay() !== 0 && date.getDay() !== 6 && !noClassSet.has(toIsoDate(date));
 }
 
-function nextInstructionalDay(date, noClassSet) {
+function isSchedulableDay(date, noClassSet, reservedFixedDates) {
+  return isInstructionalDay(date, noClassSet) && !reservedFixedDates.has(toIsoDate(date));
+}
+
+function nextInstructionalDay(date, noClassSet, reservedFixedDates = new Set()) {
   let cursor = new Date(date);
-  while (!isInstructionalDay(cursor, noClassSet)) cursor = addDays(cursor, 1);
+  while (!isSchedulableDay(cursor, noClassSet, reservedFixedDates)) cursor = addDays(cursor, 1);
   return cursor;
 }
 
-/* This is the scheduling engine: each duration consumes instructional days, then passes its next open date forward. */
+function getFixedDateAssignments(noClassSet) {
+  const assignments = new Map();
+  const reservedFixedDates = new Set();
+  const fixedBlocks = state.blocks.filter(isFixedBlock);
+
+  fixedBlocks.forEach(block => {
+    for (let date = parseIsoDate(block.fixedStart); date <= parseIsoDate(block.fixedEnd); date = addDays(date, 1)) {
+      if (isInstructionalDay(date, noClassSet)) {
+        const iso = toIsoDate(date);
+        reservedFixedDates.add(iso);
+        assignments.set(iso, block);
+      }
+    }
+  });
+
+  return { assignments, reservedFixedDates, fixedBlocks };
+}
+
+/* Fixed blocks are reserved first; every ordinary lesson shifts around them just as it shifts around no-class days. */
 function calculateSchedule() {
   const noClassSet = getNoClassSet();
-  let cursor = nextInstructionalDay(parseIsoDate(state.termStart), noClassSet);
+  const fixedSchedule = getFixedDateAssignments(noClassSet);
+  let cursor = nextInstructionalDay(parseIsoDate(state.termStart), noClassSet, fixedSchedule.reservedFixedDates);
   const scheduledBlocks = [];
-  const dayAssignments = new Map();
+  const dayAssignments = new Map(fixedSchedule.assignments);
+  const shiftedAroundFixed = new Set();
 
   state.blocks.forEach(block => {
+    if (isFixedBlock(block)) {
+      const start = parseIsoDate(block.fixedStart);
+      const end = parseIsoDate(block.fixedEnd);
+      scheduledBlocks.push({ ...block, start, end });
+      if (cursor <= end) cursor = nextInstructionalDay(addDays(end, 1), noClassSet, fixedSchedule.reservedFixedDates);
+      return;
+    }
+
     const start = new Date(cursor);
     let end = new Date(cursor);
     for (let day = 0; day < block.days; day += 1) {
-      if (day > 0) end = nextInstructionalDay(addDays(end, 1), noClassSet);
+      if (day > 0) end = nextInstructionalDay(addDays(end, 1), noClassSet, fixedSchedule.reservedFixedDates);
       dayAssignments.set(toIsoDate(end), block);
     }
+    fixedSchedule.fixedBlocks.filter(fixedBlock => start <= parseIsoDate(fixedBlock.fixedStart) && end >= parseIsoDate(fixedBlock.fixedStart)).forEach(fixedBlock => shiftedAroundFixed.add(fixedBlock.title));
     scheduledBlocks.push({ ...block, start, end });
-    cursor = nextInstructionalDay(addDays(end, 1), noClassSet);
+    cursor = nextInstructionalDay(addDays(end, 1), noClassSet, fixedSchedule.reservedFixedDates);
   });
 
-  return { scheduledBlocks, dayAssignments, nextOpenDay: cursor, noClassSet };
+  return { scheduledBlocks, dayAssignments, nextOpenDay: cursor, noClassSet, fixedBlocks: fixedSchedule.fixedBlocks, shiftedAroundFixed: [...shiftedAroundFixed] };
 }
 
 function countInstructionalDays(start, end, noClassSet) {
@@ -160,8 +207,11 @@ function renderSummary(schedule) {
   } else if (lastDate > termEnd) {
     elements.statusBanner.textContent = `This plan runs past the last instructional day by ${countInstructionalDays(addDays(termEnd, 1), lastDate, schedule.noClassSet)} instructional day(s). Shorten blocks or extend the term.`;
     elements.statusBanner.className = "status-banner error";
+  } else if (schedule.shiftedAroundFixed.length) {
+    elements.statusBanner.textContent = `The plan now moves around the fixed ${schedule.shiftedAroundFixed.join(", ")} window. Review the lesson immediately before it to make sure the pacing still makes sense.`;
+    elements.statusBanner.className = "status-banner warning";
   } else {
-    elements.statusBanner.textContent = `Your plan fits in the term. Change any duration below and all later dates will update automatically.`;
+    elements.statusBanner.textContent = `Your plan fits in the term. The four school-wide review and exam windows are fixed; all other blocks shift around them automatically.`;
     elements.statusBanner.className = "status-banner";
   }
 }
@@ -175,14 +225,23 @@ function renderBlocks(schedule) {
     const type = row.querySelector(".block-type");
     const days = row.querySelector(".block-days");
     title.value = block.title; color.value = block.color; type.value = block.type; days.value = block.days;
-    row.querySelector(".date-range").textContent = block.days === 1 ? dateLabel(block.start) : `${shortDateLabel(block.start)} – ${dateLabel(block.end)}`;
+    days.disabled = isFixedBlock(block);
+    if (isFixedBlock(block)) days.title = "This school-wide window is fixed.";
+    const dateRange = row.querySelector(".date-range");
+    dateRange.textContent = block.days === 1 ? dateLabel(block.start) : `${shortDateLabel(block.start)} – ${dateLabel(block.end)}`;
+    if (isFixedBlock(block)) {
+      const chip = document.createElement("span");
+      chip.className = "fixed-chip";
+      chip.textContent = "Fixed";
+      dateRange.append(chip);
+    }
 
     // Re-rendering after each keystroke would steal focus, so text changes apply when the teacher finishes the field.
     title.addEventListener("change", event => updateBlock(index, { title: event.target.value }));
     color.addEventListener("change", event => updateBlock(index, { color: event.target.value }));
     type.addEventListener("change", event => updateBlock(index, { type: event.target.value }));
     days.addEventListener("change", event => updateBlock(index, { days: Math.max(1, Math.min(30, Number(event.target.value) || 1)) }));
-    row.querySelector(".duplicate").addEventListener("click", () => { state.blocks.splice(index + 1, 0, { ...state.blocks[index], id: crypto.randomUUID() }); render(); });
+    row.querySelector(".duplicate").addEventListener("click", () => { state.blocks.splice(index + 1, 0, { ...state.blocks[index], id: crypto.randomUUID(), fixedStart: undefined, fixedEnd: undefined }); render(); });
     row.querySelector(".delete").addEventListener("click", () => { state.blocks.splice(index, 1); render(); });
     elements.blocksTable.append(row);
   });
