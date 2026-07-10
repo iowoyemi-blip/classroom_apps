@@ -49,13 +49,12 @@ const SAMPLE_BLOCKS = [
 ].map(([title, type, days], index) => ({ id: `sample-${index}`, title, type, days, color: SAMPLE_COLORS[index], ...FIXED_WINDOWS[`sample-${index}`] }));
 
 let state = normalizePlan(loadState());
-let currentMonth = startOfMonth(parseIsoDate(state.termStart));
 
 const elements = {
   termStart: document.querySelector("#termStart"), termEnd: document.querySelector("#termEnd"), noClassDates: document.querySelector("#noClassDates"),
   blocksTable: document.querySelector("#blocksTable"), rowTemplate: document.querySelector("#blockRowTemplate"), statusBanner: document.querySelector("#statusBanner"),
   plannedDays: document.querySelector("#plannedDays"), lastPlannedDay: document.querySelector("#lastPlannedDay"), daysRemaining: document.querySelector("#daysRemaining"),
-  monthTitle: document.querySelector("#monthTitle"), calendarGrid: document.querySelector("#calendarGrid")
+  calendarMonths: document.querySelector("#calendarMonths")
 };
 
 function defaultState() {
@@ -284,27 +283,51 @@ function renderBlocks(schedule) {
 function updateBlock(index, changes) { state.blocks[index] = { ...state.blocks[index], ...changes }; render(); }
 
 function renderCalendar(schedule) {
-  elements.monthTitle.textContent = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(currentMonth);
-  elements.calendarGrid.replaceChildren();
-  const firstCell = addDays(currentMonth, -currentMonth.getDay());
+  elements.calendarMonths.replaceChildren();
+  const firstMonth = startOfMonth(parseIsoDate(state.termStart));
+  const lastMonth = startOfMonth(parseIsoDate(state.termEnd));
   const today = toIsoDate(new Date());
-  for (let offset = 0; offset < 42; offset += 1) {
-    const date = addDays(firstCell, offset);
-    const iso = toIsoDate(date);
-    const assignedBlock = schedule.dayAssignments.get(iso);
-    const isNoClass = schedule.noClassSet.has(iso);
-    const cell = document.createElement("div");
-    cell.className = `day-cell${date.getMonth() !== currentMonth.getMonth() ? " outside" : ""}${date.getDay() === 0 || date.getDay() === 6 ? " weekend" : ""}${isNoClass ? " no-class" : ""}${assignedBlock ? " has-block" : ""}${iso === today ? " today" : ""}`;
-    if (assignedBlock) cell.style.setProperty("--block-color", assignedBlock.color);
-    const number = document.createElement("span"); number.className = "day-number"; number.textContent = date.getDate(); cell.append(number);
-    if (isNoClass) { const label = document.createElement("span"); label.className = "no-class-label"; label.textContent = "No classes"; cell.append(label); }
-    if (assignedBlock) {
+
+  for (let month = firstMonth; month <= lastMonth; month = new Date(month.getFullYear(), month.getMonth() + 1, 1, 12)) {
+    const monthSection = document.createElement("section");
+    monthSection.className = "month-section";
+    const heading = document.createElement("h3");
+    heading.className = "calendar-month-title";
+    heading.textContent = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(month);
+    monthSection.append(heading);
+
+    const weekdays = document.createElement("div");
+    weekdays.className = "calendar-weekdays";
+    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(day => {
       const label = document.createElement("span");
-      label.className = `day-label ${assignedBlock.type.toLowerCase()}`;
-      label.textContent = assignedBlock.title;
-      cell.append(label);
+      label.textContent = day;
+      weekdays.append(label);
+    });
+    monthSection.append(weekdays);
+
+    const grid = document.createElement("div");
+    grid.className = "calendar-grid";
+    const firstCell = addDays(month, -month.getDay());
+    for (let offset = 0; offset < 42; offset += 1) {
+      const date = addDays(firstCell, offset);
+      const iso = toIsoDate(date);
+      const assignedBlock = schedule.dayAssignments.get(iso);
+      const isNoClass = schedule.noClassSet.has(iso);
+      const cell = document.createElement("div");
+      cell.className = `day-cell${date.getMonth() !== month.getMonth() ? " outside" : ""}${date.getDay() === 0 || date.getDay() === 6 ? " weekend" : ""}${isNoClass ? " no-class" : ""}${assignedBlock ? " has-block" : ""}${iso === today ? " today" : ""}`;
+      if (assignedBlock) cell.style.setProperty("--block-color", assignedBlock.color);
+      const number = document.createElement("span"); number.className = "day-number"; number.textContent = date.getDate(); cell.append(number);
+      if (isNoClass) { const label = document.createElement("span"); label.className = "no-class-label"; label.textContent = "No classes"; cell.append(label); }
+      if (assignedBlock) {
+        const label = document.createElement("span");
+        label.className = `day-label ${assignedBlock.type.toLowerCase()}`;
+        label.textContent = assignedBlock.title;
+        cell.append(label);
+      }
+      grid.append(cell);
     }
-    elements.calendarGrid.append(cell);
+    monthSection.append(grid);
+    elements.calendarMonths.append(monthSection);
   }
 }
 
@@ -321,13 +344,11 @@ function exportCsv() {
   const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "lesson-schedule.csv"; link.click(); URL.revokeObjectURL(link.href);
 }
 
-elements.termStart.addEventListener("change", event => { if (event.target.value) { state.termStart = event.target.value; currentMonth = startOfMonth(parseIsoDate(event.target.value)); render(); } });
+elements.termStart.addEventListener("change", event => { if (event.target.value) { state.termStart = event.target.value; render(); } });
 elements.termEnd.addEventListener("change", event => { if (event.target.value) { state.termEnd = event.target.value; render(); } });
 elements.noClassDates.addEventListener("change", event => updateNoClassDates(event.target.value));
 document.querySelector("#addBlock").addEventListener("click", () => { state.blocks.push({ id: crypto.randomUUID(), title: "New lesson block", type: "Lesson", days: 1, color: COLOR_CYCLE[state.blocks.length % COLOR_CYCLE.length] }); render(); });
-document.querySelector("#previousMonth").addEventListener("click", () => { currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1, 12); renderCalendar(calculateSchedule()); });
-document.querySelector("#nextMonth").addEventListener("click", () => { currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1, 12); renderCalendar(calculateSchedule()); });
 document.querySelector("#exportCsv").addEventListener("click", exportCsv);
-document.querySelector("#resetPlan").addEventListener("click", () => { if (window.confirm("Replace the current plan with the 2026-27 sample plan?")) { state = defaultState(); currentMonth = startOfMonth(parseIsoDate(state.termStart)); render(); } });
+document.querySelector("#resetPlan").addEventListener("click", () => { if (window.confirm("Replace the current plan with the 2026-27 sample plan?")) { state = defaultState(); render(); } });
 
 render();
