@@ -4,7 +4,7 @@ A local, browser-based planning tool for the 2026-27 Algebra I instructional cal
 
 Change the number of instructional days assigned to any lesson and every later block is re-dated automatically. The app skips weekends and the built-in no-class dates; those dates can be edited in the app to match changes during the year.
 
-The initial blocks use the same color families as the supplied instructional calendar. Use the color square beside any block to change its calendar fill. Midterm review, midterm exams, finals review, and final exams are fixed school-wide windows; normal lessons shift around them automatically.
+The initial blocks use the same color families as the supplied instructional calendar. Use the color square beside any block to change its calendar fill. Midterm review, midterm exams, finals review, and final exams are fixed school-wide windows. A lesson may not carry past Midterm Exams or Final Exams, which are semester endpoints; the app flags any days that do not fit before those deadlines.
 
 ## Use
 
