@@ -68,10 +68,11 @@ td input, td select { min-width: 100px; padding: .5rem; }
 .row-button.delete { color: var(--red); background: #fceeee; }
 .action-col { width: 90px; }
 .calendar-panel { padding-bottom: 1.25rem; }
-.month-controls { display: flex; gap: .45rem; }
-.icon-button { width: 2.2rem; height: 2.2rem; color: var(--blue-dark); background: #eaf3f8; font-size: 1.2rem; }
+.calendar-months { display: grid; gap: 1.75rem; margin-top: 1rem; }
+.month-section { padding-top: .1rem; }
+.calendar-month-title { margin: 0; color: var(--blue-dark); font-size: 1.05rem; letter-spacing: -.01em; }
 .calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
-.calendar-weekdays { margin-top: 1rem; }
+.calendar-weekdays { margin-top: .65rem; }
 .calendar-weekdays span { padding: .4rem; color: var(--muted); text-align: center; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
 .day-cell { min-height: 105px; padding: .45rem; border-right: 1px solid var(--line); border-top: 1px solid var(--line); background: white; }
 .day-cell:nth-child(7n + 1) { border-left: 1px solid var(--line); }
@@ -86,4 +87,4 @@ td input, td select { min-width: 100px; padding: .5rem; }
 .day-label.test, .day-label.review { color: #101820; }
 .no-class-label { color: #6a7782; font-size: .67rem; font-weight: 750; }
 @media (max-width: 900px) { .app-shell { grid-template-columns: 1fr; } .settings-card { position: static; } .day-cell { min-height: 88px; } }
-@media (max-width: 600px) { .site-header { align-items: flex-start; flex-direction: column; padding: 1.4rem; gap: 1rem; } .app-shell { padding: 1rem; } .summary-grid { grid-template-columns: 1fr; gap: .65rem; } .panel { padding: 1rem; } .table-wrap { margin-right: -1rem; margin-left: -1rem; } .calendar-panel { padding: 1rem .55rem; } .calendar-panel .panel-title-row { padding: 0 .45rem; } .calendar-weekdays span { font-size: .6rem; } .day-cell { min-height: 70px; padding: .25rem; } .day-label { font-size: .6rem; } }
+@media (max-width: 600px) { .site-header { align-items: flex-start; flex-direction: column; padding: 1.4rem; gap: 1rem; } .app-shell { padding: 1rem; } .summary-grid { grid-template-columns: 1fr; gap: .65rem; } .panel { padding: 1rem; } .table-wrap { margin-right: -1rem; margin-left: -1rem; } .calendar-panel { padding: 1rem .55rem; } .calendar-panel .panel-title-row, .calendar-panel .panel-note { padding: 0 .45rem; } .calendar-weekdays span { font-size: .6rem; } .day-cell { min-height: 70px; padding: .25rem; } .day-label { font-size: .6rem; } }

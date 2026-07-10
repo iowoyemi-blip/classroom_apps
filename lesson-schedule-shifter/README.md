@@ -6,6 +6,8 @@ Change the number of instructional days assigned to any lesson and every later b
 
 The initial blocks use the same color families as the supplied instructional calendar. Use the color square beside any block to change its calendar fill. Midterm review, midterm exams, finals review, and final exams are fixed school-wide windows. A lesson may not carry past Midterm Exams or Final Exams, which are semester endpoints; the app flags any days that do not fit before those deadlines.
 
+The calendar displays the whole school year in sequence. Scroll down to move from one month to the next.
+
 ## Use
 
 Open [app/index.html](app/index.html) in a modern browser. No install, account, or internet connection is required.
