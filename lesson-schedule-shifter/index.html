@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson Schedule Shifter</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Algebra I • 2026-27 planning tool</p>
+      <h1>Lesson Schedule Shifter</h1>
+      <p class="subtitle">Change a lesson's length. The rest of the schedule moves itself.</p>
+    </div>
+    <div class="header-actions">
+      <button class="button secondary" id="exportCsv">Export CSV</button>
+      <button class="button secondary" id="resetPlan">Reset sample plan</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="settings-card" aria-label="Schedule settings">
+      <div class="section-heading">
+        <p class="eyebrow">Schedule settings</p>
+        <h2>Instructional calendar</h2>
+      </div>
+
+      <label for="termStart">First instructional day</label>
+      <input id="termStart" type="date">
+
+      <label for="termEnd">Last instructional day</label>
+      <input id="termEnd" type="date">
+
+      <label for="noClassDates">No-class dates</label>
+      <textarea id="noClassDates" rows="12" spellcheck="false" aria-describedby="noClassHelp"></textarea>
+      <p id="noClassHelp" class="help-text">One date per line, in YYYY-MM-DD form. Weekends are skipped automatically.</p>
+
+      <div class="how-it-works">
+        <h3>How to revise the plan</h3>
+        <ol>
+          <li>Change the number of days beside any block.</li>
+          <li>Every block after it shifts immediately.</li>
+          <li>Use the calendar to spot the new dates.</li>
+        </ol>
+      </div>
+    </aside>
+
+    <section class="workspace" aria-live="polite">
+      <div id="statusBanner" class="status-banner" role="status"></div>
+
+      <section class="summary-grid" aria-label="Schedule summary">
+        <article><span>Instructional days planned</span><strong id="plannedDays">0</strong></article>
+        <article><span>Last planned day</span><strong id="lastPlannedDay">—</strong></article>
+        <article><span>Days remaining</span><strong id="daysRemaining">—</strong></article>
+      </section>
+
+      <section class="panel schedule-panel">
+        <div class="panel-title-row">
+          <div>
+            <p class="eyebrow">Editable sequence</p>
+            <h2>Your lesson blocks</h2>
+          </div>
+          <button class="button" id="addBlock">+ Add lesson block</button>
+        </div>
+        <p class="panel-note">Dates are calculated, not typed. The first block starts on the first instructional day.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Block</th><th scope="col">Color</th><th scope="col">Type</th><th scope="col">Instructional days</th><th scope="col">Scheduled dates</th><th scope="col" class="action-col">Actions</th></tr>
+            </thead>
+            <tbody id="blocksTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel calendar-panel">
+        <div class="panel-title-row">
+          <div>
+            <p class="eyebrow">Calendar preview</p>
+            <h2 id="monthTitle">Month</h2>
+          </div>
+          <div class="month-controls">
+            <button class="icon-button" id="previousMonth" aria-label="Previous month">←</button>
+            <button class="icon-button" id="nextMonth" aria-label="Next month">→</button>
+          </div>
+        </div>
+        <div class="calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </section>
+    </section>
+  </main>
+
+  <template id="blockRowTemplate">
+    <tr>
+      <td><input class="block-title" type="text" aria-label="Block title"></td>
+      <td><input class="block-color" type="color" aria-label="Block color"></td>
+      <td><select class="block-type" aria-label="Block type"><option value="Lesson">Lesson</option><option value="Quiz">Quiz</option><option value="Review">Review</option><option value="Test">Test</option><option value="Activity">Activity</option></select></td>
+      <td><input class="block-days" type="number" min="1" max="30" step="1" aria-label="Instructional days"></td>
+      <td class="date-range"></td>
+      <td class="row-actions"><button class="row-button duplicate" title="Duplicate block" aria-label="Duplicate block">⧉</button><button class="row-button delete" title="Delete block" aria-label="Delete block">×</button></td>
+    </tr>
+  </template>
+</body>
+</html>
