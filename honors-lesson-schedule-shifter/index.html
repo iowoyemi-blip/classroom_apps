@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Honors Lesson Schedule Shifter</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="honors-data.js"></script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Honors Algebra I • 2026-27 planning tool</p>
+      <h1>Honors Lesson Schedule Shifter</h1>
+      <p class="subtitle">Change a lesson's length. The rest of the schedule moves itself.</p>
+    </div>
+    <div class="header-actions">
+      <button class="button secondary" id="exportCsv">Export CSV</button>
+      <button class="button secondary" id="resetPlan">Reset Honors plan</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="settings-card" aria-label="Schedule settings">
+      <div class="section-heading">
+        <p class="eyebrow">Schedule settings</p>
+        <h2>Instructional calendar</h2>
+      </div>
+
+      <label for="termStart">First instructional day</label>
+      <input id="termStart" type="date">
+
+      <label for="termEnd">Last instructional day</label>
+      <input id="termEnd" type="date">
+
+      <label for="springStart">First spring instructional day</label>
+      <input id="springStart" type="date">
+      <p class="help-text">The unprovided calendar between Dec 11 and spring start stays unassigned.</p>
+
+      <label for="noClassDates">No-class dates</label>
+      <textarea id="noClassDates" rows="12" spellcheck="false" aria-describedby="noClassHelp"></textarea>
+      <p id="noClassHelp" class="help-text">One date per line, in YYYY-MM-DD form. Weekends are skipped automatically. Midterm review and spring start are protected separately. Spring closures are planning assumptions; see calendar notes.</p>
+
+      <div class="how-it-works">
+        <h3>How to revise the plan</h3>
+        <ol>
+          <li>Change the number of days beside any block.</li>
+          <li>Every block after it shifts immediately.</li>
+          <li>Use the calendar to spot the new dates.</li>
+        </ol>
+      </div>
+    </aside>
+
+    <section class="workspace" aria-live="polite">
+      <p id="storageNotice" class="status-banner warning" hidden>Browser storage is unavailable. Export CSV before closing to keep a copy of your plan.</p>
+      <details class="panel source-notes" open>
+        <summary>Calendar notes - review spring dates</summary>
+        <p>Imported from your seven-page <strong>2026-2027 Unit Calendars</strong> PDF. Fall dates follow the source. As requested, spring uses <strong>2027</strong>; the PDF's original dates remain under each block.</p>
+        <ul>
+          <li>This copy keeps the original shifter's <strong>whole weekday slots</strong>, not individual class meetings. Wed/Thu blocks span two dates. Overlapping spring Block 1/Block 2 alternatives are translated into Tuesday and Wednesday/Thursday slots; review them against your Honors meeting days.</li>
+          <li>Spring starts Tuesday, <strong>January 19, 2027</strong>, preserving the source's weekday pattern. The blank January week remains an editable five-day placeholder.</li>
+          <li>Spring no-class assumptions: Jan 18, Feb 15, Mar 8-12, Mar 26 and 29 (Easter closures), and Apr 30 (the source's Friday SPC closure). Confirm these with your school calendar. Easter dates checked against the <a href="https://www.usccb.org/resources/2027cal.pdf" target="_blank" rel="noopener">2027 USCCB calendar</a>.</li>
+          <li>Dec 12 through spring start is labeled <strong>Calendar not supplied</strong>. The PDF gives no exam dates or final-exam plan; none have been added.</li>
+        </ul>
+        <p>Your Honors plan saves separately in this browser. <a href="#calendarPanel">Jump to calendar</a></p>
+      </details>
+      <div id="statusBanner" class="status-banner" role="status"></div>
+
+      <section class="summary-grid" aria-label="Schedule summary">
+        <article><span>Instructional days planned</span><strong id="plannedDays">0</strong></article>
+        <article><span>Last planned day</span><strong id="lastPlannedDay">—</strong></article>
+        <article><span>Days remaining</span><strong id="daysRemaining">—</strong></article>
+      </section>
+
+      <section class="panel schedule-panel">
+        <div class="panel-title-row">
+          <div>
+            <p class="eyebrow">Editable sequence</p>
+            <h2>Your lesson blocks</h2>
+          </div>
+          <button class="button" id="addBlock">+ Add lesson block</button>
+        </div>
+        <p class="panel-note">Dates are calculated, not typed. The supplied midterm review week and spring start stay anchored. Dates below are calculated from weekday slots; source dates and editable notes stay with each lesson.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Block</th><th scope="col">Color</th><th scope="col">Type</th><th scope="col">Instructional days</th><th scope="col">Scheduled dates</th><th scope="col" class="action-col">Actions</th></tr>
+            </thead>
+            <tbody id="blocksTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel calendar-panel" id="calendarPanel">
+        <div class="panel-title-row">
+          <div>
+            <p class="eyebrow">Calendar preview</p>
+            <h2>School-year calendar</h2>
+          </div>
+        </div>
+        <p class="panel-note">Scroll down to move through the school year. Each month updates automatically when you revise the plan.</p>
+        <div class="calendar-months" id="calendarMonths"></div>
+      </section>
+    </section>
+  </main>
+
+  <template id="blockRowTemplate">
+    <tr>
+      <td><input class="block-title" type="text" aria-label="Block title"><textarea class="block-notes" rows="2" aria-label="Lesson notes" placeholder="Notes / Quick Checks"></textarea><small class="source-dates"></small></td>
+      <td><input class="block-color" type="color" aria-label="Block color"></td>
+      <td><select class="block-type" aria-label="Block type"><option value="Lesson">Lesson</option><option value="Quiz">Quiz</option><option value="Review">Review</option><option value="Test">Test</option><option value="Activity">Activity</option></select></td>
+      <td><input class="block-days" type="number" min="1" max="30" step="1" aria-label="Instructional days"></td>
+      <td class="date-range"></td>
+      <td class="row-actions"><button class="row-button duplicate" title="Duplicate block" aria-label="Duplicate block">⧉</button><button class="row-button delete" title="Delete block" aria-label="Delete block">×</button></td>
+    </tr>
+  </template>
+</body>
+</html>
